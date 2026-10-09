@@ -1,0 +1,14 @@
+# Geheimen – nooit naar GitHub
+.env
+.env.*
+!.env.voorbeeld
+
+# Klantdocumenten en output – blijven lokaal
+bronnen/
+output/
+
+# Windows/Office rommel
+~$*
+*.tmp
+Thumbs.db
+desktop.ini
