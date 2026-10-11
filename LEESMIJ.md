@@ -13,12 +13,13 @@ Open VSCode → het Mainframe staat open → klik op het oranje sterretje (Claud
 | Map/bestand | Wat | Naar GitHub? |
 |---|---|---|
 | CLAUDE.md | De hoofdinstructies voor Claude | ja |
+| AGENTS.md | Instructies voor ChatGPT (Codex), verwijst naar CLAUDE.md | ja |
 | context/ | Bedrijfsprofiel, stijl, normen, prijzen, huisstijl | ja |
 | geheugen/ | Besluiten, lessen, lopende projecten | ja |
 | .claude/skills/ | Vaste werkwijzen | ja |
 | bronnen/ | Jouw klantdocumenten en voorbeelden | NEE, blijft lokaal |
 | output/ | Wat het Mainframe maakt | NEE, blijft lokaal |
-| .env | API-sleutels (ChatGPT) | NEE, nooit |
+| .env | API-sleutels (nu niet in gebruik) | NEE, nooit |
 
 ## Zelf trainen
 Je maakt het Mainframe slimmer op drie manieren:
@@ -27,11 +28,11 @@ Je maakt het Mainframe slimmer op drie manieren:
 3. **Nieuwe skills**: zeg "maak een nieuwe skill voor …".
 
 ## Skills
-offerte · kostenraming · werkplan-bomen · plantselectietabel · beplantingsplan · geheugen-bijwerken · nieuwe-skill
+offerte · kostenraming · werkplan-bomen · plantselectietabel · beplantingsplan · geheugen-bijwerken · nieuwe-skill · mail-concepten · factuur
 
 ## Fasen
 - [x] Fase 1 – Basis, bedrijfsprofiel, eerste skills
 - [ ] Fase 2 – Bestaande documenten en huisstijl inlezen, skills aanscherpen
 - [ ] Fase 3 – Outlook, agenda en OneDrive-werkmap (Copilot)
-- [ ] Fase 4 – ChatGPT-koppeling
+- [ ] Fase 4 – ChatGPT-koppeling (via Codex-extensie in VSCode)
 - [ ] Fase 5 – Dashboard, marketing en kwekerij-skills

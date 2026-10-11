@@ -23,7 +23,21 @@
 [AANVULLEN: kernboodschap in 1–2 zinnen, bijv. waarom gemeenten voor J.L. Post kiezen]
 
 ### Contactgegevens voor documenten
-[AANVULLEN: adres, KvK, btw-nummer, telefoon, e-mail, website]
+- Adres: Herenweg 3a, 3602 AM Maarssen
+- Telefoon: 06 2982 6760
+- E-mail: info@jlpostgroenadvies.nl (Microsoft 365)
+- KvK: 99775255
+- Btw-id: NL005410138B18
+- Website: www.jlpostgroenadvies.nl (domein bij TransIP; site in `website/`, nog niet online)
+- Betaaltermijn facturen: 30 dagen
+
+## Groenmast (in ontwikkeling)
+- Groene masten en plantenbakken voor klimplanten in de openbare ruimte
+- Ontwikkeld door Joris samen met Ruimte voor Advies
+- Wordt waarschijnlijk een aparte bv; tot die tijd offertes onder de naam Groenmast
+- Producten tot nu toe: cortenstalen plantenbakken (gepoedercoat) met substraat (RockflowFloraSponge), beplanting en meerjarige nazorg
+- Prijzen: zie `context/prijzen.md`, sectie Groenmast
+- [AANVULLEN: rechtsvorm/oprichtingsdatum zodra bekend, rolverdeling met Ruimte voor Advies]
 
 ## Boomkwekerij L.H. Post
 - Familiekwekerij in Maarssen (Stichtse Vecht)

@@ -1,0 +1,33 @@
+{
+  "window.title": "Mainframe – J.L. Post Groenadvies${separator}${activeEditorShort}",
+  "workbench.startupEditor": "readme",
+  "workbench.colorTheme": "Dark Modern",
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#081702",
+    "titleBar.activeForeground": "#E8F5DF",
+    "titleBar.inactiveBackground": "#081702",
+    "activityBar.background": "#0B1F04",
+    "activityBar.foreground": "#6FCD2F",
+    "activityBar.inactiveForeground": "#7FA36A",
+    "activityBar.activeBorder": "#6FCD2F",
+    "activityBarBadge.background": "#4A8F22",
+    "activityBarBadge.foreground": "#FFFFFF",
+    "sideBar.background": "#0E1A09",
+    "sideBarSectionHeader.background": "#13240C",
+    "editorGroupHeader.tabsBackground": "#0E1A09",
+    "tab.activeBorderTop": "#6FCD2F",
+    "tab.inactiveBackground": "#0E1A09",
+    "statusBar.background": "#4A8F22",
+    "statusBar.foreground": "#FFFFFF",
+    "statusBar.noFolderBackground": "#4A8F22",
+    "statusBarItem.remoteBackground": "#3A721A",
+    "button.background": "#4A8F22",
+    "button.hoverBackground": "#5AA82A",
+    "badge.background": "#4A8F22",
+    "focusBorder": "#6FCD2F",
+    "progressBar.background": "#6FCD2F",
+    "textLink.foreground": "#6FCD2F",
+    "list.activeSelectionBackground": "#1E3A10",
+    "list.hoverBackground": "#16290D"
+  }
+}

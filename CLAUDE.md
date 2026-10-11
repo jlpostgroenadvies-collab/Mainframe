@@ -20,6 +20,7 @@ Eigenaar van J.L. Post Groenadvies: onafhankelijk groenadvies en landschapsontwe
 | Offerte, raming, prijzen | `context/prijzen.md` |
 | Documenten opmaken | `context/huisstijl.md` |
 | Lopende opdrachten | `geheugen/projecten.md` |
+| Website (map `website/`) | `website/LEESMIJ.md`: noem Joris eerst de open punten onder "Nog te doen" |
 
 ## Mappen
 - `context/` – vaste kennis over het bedrijf (gaat mee naar GitHub)
@@ -35,6 +36,7 @@ Eigenaar van J.L. Post Groenadvies: onafhankelijk groenadvies en landschapsontwe
 4. Documenten opleveren als .docx / .xlsx / .pdf in `output/<projectnaam>/`.
 5. Na een afgeronde taak: vraag of het geheugen bijgewerkt moet worden (skill `geheugen-bijwerken`).
 6. Zegt Joris "opslaan" of "sla op": commit alle wijzigingen met een korte Nederlandse omschrijving en push naar GitHub. Nooit force-push.
+7. E-mail: NOOIT verzenden of doorsturen. Antwoorden alleen als concept klaarzetten in Outlook; Joris leest na en verstuurt zelf. (Ook technisch geblokkeerd in `.claude/settings.json`.)
 
 ## Skills (vaste werkwijzen)
 - `offerte` – offerte voor advieswerk
@@ -44,7 +46,9 @@ Eigenaar van J.L. Post Groenadvies: onafhankelijk groenadvies en landschapsontwe
 - `beplantingsplan` – van locatieanalyse tot plantlijst
 - `geheugen-bijwerken` – lessen en besluiten vastleggen
 - `nieuwe-skill` – Joris een nieuwe vaste werkwijze laten toevoegen
+- `mail-concepten` – nieuwe mail lezen en antwoorden als concept klaarzetten (nooit verzenden)
+- `factuur` – factuur maken uit de weekstaten in OneDrive (xlsx + pdf, eigen opmaak)
 
 ## Andere AI's (in opbouw)
-- ChatGPT: via OpenAI API-sleutel in `.env` (fase 4, nog niet actief).
+- ChatGPT: via de Codex-extensie in VSCode met Joris' ChatGPT-abonnement, op dezelfde map. Codex leest `AGENTS.md`; houd dat bestand in lijn met dit bestand als regels of skills veranderen.
 - Microsoft 365 Copilot: werkt op dezelfde bestanden via de OneDrive-werkmap (fase 3, nog niet actief).
