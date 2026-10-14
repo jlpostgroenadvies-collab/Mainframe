@@ -26,4 +26,5 @@ Pas skills, `context/` en `geheugen/` alleen aan als Joris daarom vraagt. Het zi
 - Klant- en persoonsgegevens alleen in `bronnen/` en `output/`.
 - Prijzen alleen uit `context/prijzen.md` of van Joris, anders `[PRIJS INVULLEN]`.
 - Documenten opleveren in `output/<projectnaam>/`.
+- Broncode van eigen tools staat in `tools/`; voor de bomentool eerst `tools/bomentool/LEESMIJ.md` lezen.
 - "Opslaan": commit met korte Nederlandse omschrijving en push. Nooit force-push.

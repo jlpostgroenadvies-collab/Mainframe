@@ -20,7 +20,7 @@ export default function Diensten() {
             transition={{ delay: 0.1 }}
             className="text-lg text-muted-foreground"
           >
-            Gespecialiseerde groenkennis voor elke fase van uw project. Van strategisch advies tot gedetailleerde realisatieplannen en langdurig beheer.
+            Groenkennis voor gemeenten in elke fase van een project: van beleid en ontwerp tot uitvoering en beheer.
           </motion.p>
         </div>
       </div>

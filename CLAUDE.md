@@ -18,14 +18,17 @@ Eigenaar van J.L. Post Groenadvies: onafhankelijk groenadvies en landschapsontwe
 | Altijd | `geheugen/geheugen.md` |
 | Inhoudelijk vakwerk | `context/normen-en-bronnen.md` |
 | Offerte, raming, prijzen | `context/prijzen.md` |
+| Boekhouding in e-Boekhouden.nl | `context/e-boekhouden.md` |
 | Documenten opmaken | `context/huisstijl.md` |
 | Lopende opdrachten | `geheugen/projecten.md` |
+| Bomentool (boomselectie + ontwerptool NHV) | `tools/bomentool/LEESMIJ.md` |
 | Website (map `website/`) | `website/LEESMIJ.md`: noem Joris eerst de open punten onder "Nog te doen" |
 
 ## Mappen
 - `context/` – vaste kennis over het bedrijf (gaat mee naar GitHub)
 - `geheugen/` – wat we samen leren en besluiten (gaat mee naar GitHub)
 - `.claude/skills/` – vaste werkwijzen (gaat mee naar GitHub)
+- `tools/` – broncode van eigen tools, zoals de bomentool (gaat mee naar GitHub; gegevens staan in OneDrive)
 - `bronnen/` – klantdocumenten, oude offertes, inventarisaties (blijft LOKAAL, niet in GitHub)
 - `output/` – gemaakte documenten (blijft LOKAAL; later naar OneDrive-werkmap)
 

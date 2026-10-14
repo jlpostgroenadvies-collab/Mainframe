@@ -12,6 +12,7 @@ Techniek: React + Vite + Tailwind. Geen database of server nodig: het is een sta
 - Bedrijfsgegevens, paginatitels en -omschrijvingen (voor Google en AI): `src/lib/site.ts`
 - Diensten: `src/lib/diensten.ts`
 - Projecten: `src/lib/projecten.ts`
+- Kennisbank-artikelen: `src/lib/artikelen.ts`
 - Pagina-opmaak: `src/pages/`
 
 ## Vindbaarheid (zoekmachines en AI-agents)
@@ -32,12 +33,13 @@ Zet ze in `public/images/` en vul het pad in. Zolang een foto ontbreekt, toont d
 Liefst .jpg of .webp, maximaal ca. 1600 px breed, voor snelle laadtijd op telefoons.
 
 ## Nog te doen
-- Toestemming van opdrachtgevers (en Ruimte voor Advies) om de projecten op de site te noemen.
+- Toestemming van opdrachtgevers (en Ruimte voor Advies) om de projecten op de site te noemen. Joris weet op 22-10-2026 welke referenties mogen; dan de lijst in `src/lib/projecten.ts` bijwerken.
 - Tekst Over mij controleren (opleiding, achtergrond): die komt uit Replit en is niet geverifieerd.
-- Kennisbank: echte artikelen schrijven.
+- Kennisbank: drie conceptartikelen staan in `src/lib/artikelen.ts` (2026-10-11). Joris leest na vóór publicatie; daarna eventueel eigen pagina per artikel (beter vindbaar).
 - Foto's aanleveren: openingsfoto (hero), portret, eventueel projectfoto's.
-- Besluiten of de dienstenteksten (nu gericht op particulieren/VvE's) herschreven worden voor gemeenten.
 
 ## Afspraken over de inhoud
 - ETM (European Tree Manager): de werkzaamheden staan onder Bomen, maar de opleiding/het certificaat wordt niet met naam genoemd (besluit Joris, 2026-10-11).
 - Geen verzonnen projecten, citaten of cijfers; alleen echte referenties.
+- Doelgroep: teksten zijn geschreven voor gemeenten (besluit Joris, 2026-10-12).
+- Copijnlaan (Groenekan) komt niet op de site (besluit Joris, 2026-10-12).

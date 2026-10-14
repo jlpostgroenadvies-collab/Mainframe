@@ -40,7 +40,7 @@ export default function Home() {
               J.L. Post Groenadvies · Maarssen
             </p>
             <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 md:mb-6 leading-tight text-balance">
-              Ruimte voor natuur in de gebouwde omgeving.
+              Ruimte voor natuur in de bebouwde omgeving.
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-foreground/80 mb-6 md:mb-8 font-light">
               Onafhankelijk groenadvies voor gemeenten: bomen, beplanting, ecologisch ontwerp en kostenramingen.

@@ -1,6 +1,16 @@
 import { PageLayout } from "@/components/layout/PageLayout";
 import { motion } from "framer-motion";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, ChevronDown } from "lucide-react";
+import { artikelen, type ArtikelAfbeelding } from "@/lib/artikelen";
+
+function Afbeelding({ src, alt, caption }: ArtikelAfbeelding) {
+  return (
+    <figure className="my-6">
+      <img src={src} alt={alt} loading="lazy" className="w-full rounded-xl border border-border shadow-sm" />
+      <figcaption className="mt-2 text-sm text-muted-foreground">{caption}</figcaption>
+    </figure>
+  );
+}
 
 const tips = [
   "Test altijd de waterdoorlatendheid van de bodem vóór u een beplantingsplan maakt. Een simpele infiltratieproef voorkomt jarenlange problemen met wateroverlast.",
@@ -40,9 +50,44 @@ export default function Kennisbank() {
             <div className="lg:col-span-2 space-y-10">
               <h2 className="font-serif text-3xl font-bold mb-8">Artikelen</h2>
 
-              <div className="bg-card rounded-2xl border border-border p-8">
-                <p className="text-muted-foreground">Hier verschijnen binnenkort artikelen over bomen, beplanting en groen in de openbare ruimte.</p>
-              </div>
+              {artikelen.map((artikel) => (
+                <article key={artikel.slug} id={artikel.slug} className="bg-card rounded-2xl border border-border p-8">
+                  <h3 className="font-serif text-2xl font-bold mb-2 text-foreground">{artikel.title}</h3>
+                  {artikel.subtitle && <p className="text-secondary font-medium mb-4">{artikel.subtitle}</p>}
+                  {artikel.image && <Afbeelding {...artikel.image} />}
+                  <p className="text-muted-foreground leading-relaxed mb-4">{artikel.summary}</p>
+                  <details className="group">
+                    <summary className="cursor-pointer list-none inline-flex items-center gap-2 font-medium text-primary">
+                      <span className="group-open:hidden">Lees verder</span>
+                      <span className="hidden group-open:inline">Inklappen</span>
+                      <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+                    </summary>
+                    <div className="mt-6 space-y-6">
+                      {artikel.sections.map((sectie, idx) => (
+                        <section key={idx} className="space-y-4">
+                          {sectie.heading && <h4 className="font-serif text-xl font-bold text-foreground">{sectie.heading}</h4>}
+                          {sectie.paragraphs.map((tekst, i) => (
+                            <p key={i} className="text-foreground/90 leading-relaxed">{tekst}</p>
+                          ))}
+                          {sectie.list && (
+                            <ul className="space-y-2 pl-5 list-disc marker:text-secondary">
+                              {sectie.list.map((item, i) => (
+                                <li key={i} className="text-foreground/90 leading-relaxed">
+                                  <strong className="text-foreground">{item.label}</strong> {item.text}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                          {sectie.after?.map((tekst, i) => (
+                            <p key={i} className="text-foreground/90 leading-relaxed">{tekst}</p>
+                          ))}
+                          {sectie.image && <Afbeelding {...sectie.image} />}
+                        </section>
+                      ))}
+                    </div>
+                  </details>
+                </article>
+              ))}
             </div>
 
             {/* Sidebar / Tips */}

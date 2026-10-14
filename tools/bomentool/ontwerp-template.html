@@ -1,0 +1,1308 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ontwerptool · Boomselectietool NHV</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,600;1,6..72,400&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: bovenbalk, kaart links (vult het scherm), zijpaneel rechts; op telefoon paneel onder de kaart */
+:root {
+  color-scheme: light;
+  --bg: #fbfcf9; --surface: #ffffff; --fg: #1e2a19; --muted: #66735f; --line: #e3eadc;
+  --accent: #2f6f12; --accent-2: #6aa83f; --accent-soft: #eff6e8;
+  --ok: #2b8a1f; --ok-bg: #e1f1d6; --krap: #d79a00; --krap-bg: #fbefcf; --nee: #b8402f; --nee-bg: #f9e3df; --onb: #7b8a73; --onb-bg: #eef1ea;
+  --grond: #7a5230; --zand: #e3c063; --granulaat: #6f8fa8;
+  --font-display: "Newsreader", Georgia, serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 14px; line-height: 1.45; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+button, input, select { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.merk { display: grid; }
+.merk small { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; }
+.merk b { font-family: var(--font-display); font-size: 1.25rem; color: var(--accent); font-weight: 600; line-height: 1.1; }
+nav { display: flex; gap: 4px; }
+nav a { text-decoration: none; color: var(--muted); padding: 6px 12px; border-radius: 999px; font-weight: 600; }
+nav a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+nav a:hover { color: var(--accent); }
+.zoek { position: relative; flex: 1 1 260px; max-width: 420px; }
+.zoek input { width: 100%; padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.zoek ul { position: absolute; z-index: 1000; top: 100%; left: 0; right: 0; margin: 4px 0 0; padding: 4px; list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 24px rgba(30,45,20,.15); }
+.zoek li button { width: 100%; text-align: left; background: none; border: 0; padding: 7px 9px; border-radius: 6px; cursor: pointer; }
+.zoek li button:hover, .zoek li button:focus-visible { background: var(--accent-soft); }
+.zoek li small { color: var(--muted); }
+
+.werk { display: grid; grid-template-columns: minmax(0, 1fr) 400px; min-height: 0; }
+#kaart { min-height: 300px; background: var(--accent-soft); }
+#kaart.plaatsen { cursor: crosshair; }
+.leaflet-container { font: inherit; }
+.paneel { overflow-y: auto; border-left: 1px solid var(--line); background: var(--surface); padding: 16px; display: grid; gap: 18px; align-content: start; }
+h2 { font-family: var(--font-body); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 700; margin: 0 0 8px; }
+.blok { display: grid; gap: 8px; }
+.blok + .blok { border-top: 1px solid var(--line); padding-top: 16px; }
+label.veld { display: grid; gap: 3px; font-size: 0.8rem; color: var(--muted); min-width: 0; }
+label.veld input, label.veld select { width: 100%; padding: 6px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--fg); font-size: 0.9rem; }
+.rij2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rij3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.knop { border: 1px solid var(--line); background: var(--surface); padding: 6px 11px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.knop:hover { border-color: var(--accent-2); }
+.knop.hoofd { background: var(--accent); border-color: var(--accent); color: #fff; }
+.knop.hoofd[aria-pressed="true"] { background: var(--accent-2); border-color: var(--accent-2); }
+.knop.gevaar { color: var(--nee); }
+.knop.klein { padding: 3px 9px; font-size: 0.82rem; }
+.knoppen { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); padding: 6px 11px; cursor: pointer; font-size: 0.88rem; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.hint { font-size: 0.8rem; color: var(--muted); margin: 0; }
+.wet { font-family: var(--font-display); font-style: italic; }
+.wet .cv { font-style: normal; }
+label.check { display: flex; gap: 7px; align-items: flex-start; cursor: pointer; }
+label.check input { margin-top: 2px; accent-color: var(--accent); }
+
+/* Tabbladen en werkbalk */
+.paneel { padding-top: 0; gap: 14px; }
+.tabs { position: sticky; top: 0; z-index: 5; display: flex; gap: 2px; margin: 0 -16px; padding: 10px 12px 0; background: var(--surface); border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; border: 0; background: none; padding: 8px 6px 9px; font-weight: 600; color: var(--muted); border-bottom: 2.5px solid transparent; cursor: pointer; white-space: nowrap; }
+.tabs button:hover { color: var(--accent); }
+.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.tabs button span:not(:empty)::before { content: "· "; }
+.werkbalk { display: flex; gap: 6px; flex-wrap: wrap; }
+.werkbalk .knop { flex: 1; }
+.knop:disabled { opacity: .45; cursor: default; }
+.knop.klein[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-2); color: var(--accent); }
+.tabinhoud { display: grid; gap: 16px; align-content: start; }
+.stappen { margin: 0; padding-left: 1.2em; display: grid; gap: 5px; font-size: 0.88rem; }
+.kengetallen { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.kengetallen div { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; display: grid; }
+.kengetallen small { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.kengetallen b { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.kengetallen .let b { color: var(--nee); }
+.melding:empty { display: none; }
+.maker { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--muted); opacity: .85; }
+.maker img { width: 16px; height: 16px; border-radius: 3px; }
+.paneel .maker { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+.mattabel.nhv td:first-child { display: table-cell; }
+.mattabel.nhv th { text-align: left; font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; padding-bottom: 4px; }
+.mattabel.nhv th:last-child { text-align: right; }
+.melding { position: sticky; bottom: 0; background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 8px 10px; font-weight: 600; }
+.plaatsbanner { position: absolute; z-index: 1000; top: 10px; left: 50%; transform: translateX(-50%); background: #1f5d04; color: #fff; padding: 7px 14px; border-radius: 999px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,.3); pointer-events: none; white-space: nowrap; }
+.kaartknop { background: #fff; border: 2px solid rgba(0,0,0,.2); border-radius: 6px; padding: 6px 10px; font: 700 13px/1.2 "Public Sans", sans-serif; color: #1f5d04; cursor: pointer; }
+.kaartknop[aria-pressed="true"] { background: #1f5d04; color: #fff; }
+.vak .groep { display: grid; gap: 6px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.vak .groep > small { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+
+/* Vakken (groeiplaats-onderdelen) */
+.vakken { display: grid; gap: 8px; }
+.vak { border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; display: grid; gap: 8px; cursor: pointer; }
+.vak.actief { border-color: var(--accent-2); background: var(--accent-soft); cursor: default; }
+.vakkop { display: flex; align-items: center; gap: 8px; }
+.vakkop b { font-size: 0.88rem; }
+.vakkop .maat small { font-size: 0.72rem; color: var(--accent); }
+.vakkop .maat { text-align: right; margin-left: auto; font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mat { width: 14px; height: 14px; border-radius: 3px; flex: none; border: 1px solid rgba(0,0,0,.2); }
+.mat.bomengrond { background: var(--grond); } .mat.bomenzand { background: var(--zand); } .mat.bomengranulaat { background: var(--granulaat); }
+.vak .bewerk { display: grid; gap: 8px; }
+.vak:not(.actief) .bewerk { display: none; }
+
+.reken { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.reken div { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; display: grid; }
+.reken small { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.reken b { font-size: 1.02rem; font-variant-numeric: tabular-nums; }
+.status { border-radius: 8px; padding: 8px 10px; font-size: 0.86rem; font-weight: 600; }
+.status.ok { background: var(--ok-bg); color: var(--ok); }
+.status.krap { background: var(--krap-bg); color: #7a5200; }
+.status.nee { background: var(--nee-bg); color: var(--nee); }
+.status.onb { background: var(--onb-bg); color: var(--muted); }
+.waarsch { font-size: 0.84rem; color: #7a5200; background: var(--krap-bg); border-radius: 8px; padding: 7px 10px; }
+
+.lijst { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.lijst button { width: 100%; display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 8px; align-items: center; text-align: left; background: none; border: 1px solid transparent; border-radius: 8px; padding: 6px 8px; cursor: pointer; }
+.lijst button:hover { background: var(--bg); }
+.lijst button[aria-current="true"] { border-color: var(--accent-2); background: var(--accent-soft); }
+.nr { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 0.75rem; font-weight: 700; color: #fff; }
+.nr.ok { background: var(--ok); } .nr.krap { background: var(--krap); } .nr.nee { background: var(--nee); } .nr.onb { background: var(--onb); }
+.totaal { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.86rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.totaal b { color: var(--fg); }
+.mattabel { width: 100%; border-collapse: collapse; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+.mattabel td { padding: 4px 0; border-top: 1px solid var(--line); }
+.mattabel td:last-child { text-align: right; font-weight: 600; }
+.mattabel td:first-child { display: flex; gap: 7px; align-items: center; }
+.leeg { font-size: 0.86rem; color: var(--muted); }
+
+/* Kaartmarkeringen */
+.boompin { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 700 12px/1 "Public Sans", sans-serif; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+.boompin.ok { background: #2b8a1f; } .boompin.krap { background: #d79a00; } .boompin.nee { background: #b8402f; } .boompin.onb { background: #5e6b57; }
+.boompin.actief { box-shadow: 0 0 0 3px #f2b705, 0 1px 4px rgba(0,0,0,.45); }
+/* Boom: kroonsymbool in schetsstijl (of alleen een kruisje als de kroon op ware grootte getekend is) met nummer */
+.boomteken { position: relative; width: 40px; height: 40px; }
+.leaflet-marker-icon.boomicoon { pointer-events: none !important; }
+.boomicoon .greep, .boomicoon b { pointer-events: auto; }
+.boomteken .greep { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; cursor: move; }
+.boomteken b { cursor: pointer; }
+.boomteken svg { position: absolute; inset: 0; overflow: visible; }
+.boomteken b { position: absolute; left: 27px; top: 4px; font: 800 15px/1 "Public Sans", sans-serif; color: #5e6b57; text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff, 0 0 3px #fff; }
+.boomteken.vast b { left: 37px; top: -4px; }
+.boomteken.ok b { color: #1f7a12; } .boomteken.krap b { color: #a87400; } .boomteken.nee b { color: #b8402f; }
+.boomteken.actief svg { filter: drop-shadow(0 0 2px #f2b705) drop-shadow(0 0 2px #f2b705); }
+.boomteken.actief b { text-decoration: underline 2px #f2b705; text-underline-offset: 2px; }
+#blad .boomteken { cursor: default; }
+#blad .boomteken b { color: #1f5d04 !important; }
+#blad .legrij .boomteken { display: inline-block; flex: none; transform: scale(.7); margin: -2mm 1mm -2mm -1mm; }
+/* Boom: kruisje op de stamplek met nummerlabel (kleur = toets groeiplaats) */
+.boomkruis { position: relative; width: 22px; height: 22px; cursor: move; }
+.boomkruis i::before, .boomkruis i::after { content: ""; position: absolute; background: #1f5d04; box-shadow: 0 0 0 1px rgba(255,255,255,.85); }
+.boomkruis i::before { left: 10px; top: 3px; width: 2px; height: 16px; }
+.boomkruis i::after { top: 10px; left: 3px; height: 2px; width: 16px; }
+.boomkruis b { position: absolute; left: 14px; top: -10px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; display: grid; place-items: center; color: #fff; font: 700 10px/1 "Public Sans", sans-serif; border: 1.5px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.4); background: #5e6b57; }
+.boomkruis.ok b { background: #2b8a1f; } .boomkruis.krap b { background: #d79a00; } .boomkruis.nee b { background: #b8402f; }
+.boomkruis.actief b { box-shadow: 0 0 0 2.5px #f2b705, 0 1px 3px rgba(0,0,0,.4); }
+.boomkruis.actief i::before, .boomkruis.actief i::after { background: #f2b705; box-shadow: 0 0 0 1px #1f5d04; }
+.hoek { width: 12px; height: 12px; background: #fff; border: 2px solid #1e2a19; border-radius: 2px; cursor: move; }
+.midden { width: 10px; height: 10px; background: rgba(255,255,255,.6); border: 1.5px solid #1e2a19; border-radius: 50%; cursor: copy; }
+.verschuif { width: 22px; height: 22px; background: #fff; border: 2px solid #1e2a19; border-radius: 50%; display: grid; place-items: center; font: 700 13px/1 sans-serif; color: #1e2a19; cursor: move; }
+.legenda-kaart { background: rgba(255,255,255,.93); padding: 6px 9px; border-radius: 6px; font-size: 12px; line-height: 1.6; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+.legenda-kaart i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.legenda-kaart i.rond { border-radius: 50%; }
+input[type="file"] { display: none; }
+
+/* Printkader op de werkkaart */
+.kadergreep { width: 26px; height: 26px; background: #1e2a19; color: #fff; border: 2px solid #fff; border-radius: 6px; display: grid; place-items: center; font: 700 14px/1 sans-serif; cursor: move; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+
+/* Uitdraai: voorbeeldscherm en blad (maten in mm, 1 CSS-px = 1/96 inch) */
+#voorbeeld { position: fixed; inset: 0; z-index: 5000; background: #5f6a59; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+#voorbeeld .balk { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+#voorbeeld .balk .hint { flex: 1 1 300px; }
+#voorbeeld .podium { overflow: auto; padding: 20px; }
+#bladhouder { margin: 0 auto; }
+#blad { background: #fff; color: #111; box-shadow: 0 6px 30px rgba(0,0,0,.35); transform-origin: top left; display: grid; font-family: "Public Sans", Arial, sans-serif; position: relative; }
+#blad .kaartvak { position: relative; border: 0.35mm solid #111; overflow: hidden; }
+#blad .kaartvak .pk { position: absolute; inset: 0; background: #f2f2f2; }
+#blad .noord { position: absolute; top: 4mm; right: 4mm; z-index: 800; background: rgba(255,255,255,.9); border-radius: 1.5mm; padding: 1.5mm; }
+#blad .schaalbalk { position: absolute; left: 4mm; bottom: 4mm; z-index: 800; background: rgba(255,255,255,.92); padding: 1.5mm 2.5mm 1mm; border-radius: 1.2mm; }
+#blad .zij { display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 4mm; min-width: 0; }
+#blad h3 { font-size: 1.35em; margin: 0; font-family: "Newsreader", Georgia, serif; color: #1f5d04; line-height: 1.15; }
+#blad h4 { font-size: 0.82em; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 1.5mm; color: #4a8f22; }
+#blad table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+#blad th, #blad td { text-align: left; padding: 0.7mm 1mm; border-bottom: 0.2mm solid #ccc; vertical-align: top; }
+#blad th { font-size: 0.85em; color: #555; font-weight: 600; }
+#blad td.g, #blad th.g { text-align: right; }
+#blad .totaalrij td { font-weight: 700; border-bottom: 0.35mm solid #111; }
+#blad .sw { display: inline-block; width: 3.2mm; height: 3.2mm; border: 0.2mm solid #333; vertical-align: -0.5mm; margin-right: 1.5mm; }
+#blad .legrij { display: flex; align-items: center; gap: 1.5mm; margin-bottom: 1mm; }
+#blad .bomen { overflow: hidden; }
+#blad .noot { font-size: 0.8em; color: #555; margin: 1.5mm 0 0; }
+#blad .titelblok { border: 0.35mm solid #111; display: grid; grid-template-columns: 1fr 1fr; font-size: 0.9em; }
+#blad .titelblok > div { padding: 1.2mm 2mm; border-top: 0.2mm solid #999; }
+#blad .titelblok > div:nth-child(odd) { border-right: 0.2mm solid #999; }
+#blad .titelblok .kop { grid-column: 1 / -1; border-top: 0; display: flex; align-items: center; gap: 3mm; border-right: 0 !important; }
+#blad .titelblok .kop img { height: 11mm; width: auto; }
+#blad .titelblok small { display: block; color: #666; font-size: 0.78em; text-transform: uppercase; letter-spacing: .05em; }
+#blad .titelblok .breed { grid-column: 1 / -1; border-right: 0 !important; }
+#blad .concept { color: #b8402f; font-weight: 700; }
+#blad .boomkruis { cursor: default; }
+#blad .boomkruis b { background: #1f5d04 !important; box-shadow: none !important; }
+#blad .legrij .boomkruis { display: inline-block; flex: none; margin: 3mm 4mm 0 0; }
+
+@media print {
+  body { display: block; height: auto; background: #fff; }
+  body > *:not(#voorbeeld) { display: none !important; }
+  #voorbeeld { position: static; background: none; display: block; }
+  #voorbeeld .balk { display: none; }
+  #voorbeeld .podium { padding: 0; overflow: visible; }
+  #bladhouder { width: auto !important; height: auto !important; margin: 0; }
+  #blad { transform: none !important; box-shadow: none; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (max-width: 900px) {
+  body { display: block; height: auto; }
+  .werk { grid-template-columns: minmax(0, 1fr); }
+  #kaart { height: 62vh; }
+  .paneel { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="merk"><small>J.L. Post Groenadvies · Vergroeningsscan NHV</small><b>Boomselectietool</b></div>
+  <nav aria-label="Pagina's"><a href="index.html">Boomselectie</a><a href="ontwerp.html" aria-current="page">Ontwerp</a></nav>
+  <div class="zoek">
+    <input id="zoek" type="search" aria-label="Zoek een adres of plaats" placeholder="Zoek adres, straat of plaats" autocomplete="off">
+    <ul id="zoek-res" hidden></ul>
+  </div>
+</header>
+
+<div class="werk">
+  <div id="kaart" aria-label="Kaart"></div>
+
+  <aside class="paneel">
+    <div class="tabs" role="tablist" aria-label="Onderdelen">
+      <button type="button" role="tab" id="tab-ontwerp" data-tab="ontwerp" aria-selected="true">Ontwerp</button>
+      <button type="button" role="tab" id="tab-boom" data-tab="boom" aria-selected="false">Boom <span id="tab-boom-nr"></span></button>
+      <button type="button" role="tab" id="tab-uitdraai" data-tab="uitdraai" aria-selected="false">Uitdraai</button>
+      <button type="button" role="tab" id="tab-bestand" data-tab="bestand" aria-selected="false">Bestand</button>
+    </div>
+    <div class="werkbalk">
+      <button class="knop hoofd" type="button" id="b-plaats" aria-pressed="false">+ Boom plaatsen</button>
+      <button class="knop" type="button" id="b-undo" disabled title="Ongedaan maken (Ctrl+Z)">↶ Ongedaan maken</button>
+    </div>
+
+    <!-- Tab Ontwerp: project, totalen en lijst -->
+    <div class="tabinhoud" data-tab="ontwerp">
+      <section class="blok">
+        <label class="veld">Projectnaam <input id="o-naam" type="text" placeholder="Bijv. Vergroening Wijk Noord"></label>
+      </section>
+      <section class="blok" id="start">
+        <h2>Zo begin je</h2>
+        <ol class="stappen">
+          <li>Zoek bovenaan een adres of straat.</li>
+          <li>Klik op <b>+ Boom plaatsen</b> en daarna op de kaart. Plaats zoveel bomen als je wilt; stop met Esc.</li>
+          <li>Klik op een boom om soort, groeiplaats en kroon in te stellen.</li>
+          <li>Maak bij <b>Uitdraai</b> een tekening op schaal met de te bestellen hoeveelheden.</li>
+        </ol>
+      </section>
+      <section class="blok" id="overzicht">
+        <h2>Overzicht</h2>
+        <div class="kengetallen" id="kengetallen"></div>
+        <table class="mattabel" id="mattabel"></table>
+        <div class="knoppen"><button class="knop klein" type="button" id="b-zoom">Zoom naar ontwerp</button></div>
+      </section>
+      <section class="blok" id="nhvblok">
+        <h2>Bijdrage NHV</h2>
+        <label class="veld">Plantjaar <input id="o-plantjaar" type="number" min="2020" max="2060" step="1" inputmode="numeric"></label>
+        <table class="mattabel nhv" id="nhvtabel"></table>
+        <p class="hint" id="nhvhint"></p>
+      </section>
+      <section class="blok" id="bomenblok">
+        <h2>Bomen</h2>
+        <ul class="lijst" id="lijst"></ul>
+      </section>
+      <section class="blok">
+        <h2>Bestaande bomen</h2>
+        <p class="hint">Laad het bomenbestand van de gemeente (GeoJSON of CSV, in RD-coördinaten of graden) om te zien waar al bomen staan en waar ruimte is.</p>
+        <div class="knoppen">
+          <button class="knop" type="button" id="b-bestaand">Bomenbestand inladen</button>
+          <button class="knop klein gevaar" type="button" id="b-bestaand-wis" hidden>Verwijderen</button>
+        </div>
+        <label class="check hint" id="l-bestaand" hidden><input type="checkbox" id="o-bestaand"> Bestaande bomen tonen (ook op de uitdraai)</label>
+        <p class="hint" id="bestaand-info"></p>
+        <input type="file" id="f-bestaand" accept=".geojson,.json,.csv,.txt">
+      </section>
+      <section class="blok">
+        <h2>Weergave</h2>
+        <label class="check hint"><input type="checkbox" id="o-kroon"> Kroonprojectie van de volwassen boom tonen</label>
+      </section>
+    </div>
+
+    <!-- Tab Boom: de geselecteerde boom -->
+    <div class="tabinhoud" data-tab="boom" hidden>
+      <p class="leeg" id="geen-boom">Klik op een boom op de kaart of in de lijst om hem te bewerken.</p>
+      <div id="editor" hidden>
+        <section class="blok">
+          <h2>Soort en standplaats</h2>
+          <div class="seg" id="e-plek" role="group" aria-label="Standplaats">
+            <button type="button" data-v="gazon">Gazon</button><button type="button" data-v="plantvak">Plantvak</button><button type="button" data-v="verharding">Verharding</button>
+          </div>
+          <label class="veld">Boomsoort <select id="e-soort"></select></label>
+          <label class="check hint"><input type="checkbox" id="e-alle"> Ook soorten tonen die minder geschikt zijn voor deze standplaats</label>
+          <div class="waarsch" id="e-waarsch" hidden></div>
+        </section>
+
+        <section class="blok">
+          <h2>Groeiplaats</h2>
+          <div class="reken">
+            <div><small>Oppervlak</small><b id="r-m2">–</b></div>
+            <div><small>Volume</small><b id="r-m3">–</b></div>
+            <div><small>Benodigd</small><b id="r-nodig">–</b></div>
+          </div>
+          <div class="status onb" id="r-status">–</div>
+          <div class="vakken" id="vakken"></div>
+          <div class="knoppen"><button class="knop" type="button" id="b-vak">+ Vak toevoegen</button></div>
+          <p class="hint">Een groeiplaats bestaat uit één of meer vakken, elk met een eigen materiaal en diepte. Bijvoorbeeld bomengrond in de boomspiegel en bomenzand onder het voetpad.</p>
+          <p class="hint"><b>Overlap telt één keer.</b> Leg je een vak binnen of over een ander vak, dan gaat voor: onverhard (boomspiegel, bomengrond), dan rijbaan of parkeervak, dan voet- of fietspad. De overlap wordt afgetrokken van het vak met de laagste voorrang, ook tussen vakken van verschillende bomen.</p>
+        </section>
+
+        <section class="blok">
+          <h2>Kroon</h2>
+          <label class="veld">Kroondiameter volwassen boom (m) <input id="e-kroon" type="number" min="1" max="40" step="0.5" inputmode="decimal"></label>
+          <p class="hint" id="e-kroonbron"></p>
+        </section>
+
+        <section class="blok">
+          <label class="veld">Opmerking <input id="e-noot" type="text" placeholder="Bijv. kabels aan noordzijde"></label>
+          <div class="knoppen">
+            <button class="knop" type="button" id="b-kopie">Kopieer boom</button>
+            <button class="knop gevaar" type="button" id="b-wis">Verwijder boom</button>
+          </div>
+          <p class="hint">Sneltoetsen: Delete verwijdert de geselecteerde boom, Ctrl+Z maakt ongedaan, Esc stopt met plaatsen.</p>
+        </section>
+      </div>
+    </div>
+
+    <!-- Tab Uitdraai -->
+    <div class="tabinhoud" data-tab="uitdraai" hidden>
+      <section class="blok">
+        <h2>Blad</h2>
+        <div class="rij3">
+          <label class="veld">Papier <select id="u-formaat"><option>A4</option><option selected>A3</option><option>A2</option><option>A1</option><option>A0</option></select></label>
+          <label class="veld">Richting <select id="u-richting"><option value="liggend">Liggend</option><option value="staand">Staand</option></select></label>
+          <label class="veld">Schaal <select id="u-schaal"><option value="100">1:100</option><option value="200" selected>1:200</option><option value="250">1:250</option><option value="500">1:500</option><option value="1000">1:1000</option></select></label>
+        </div>
+        <label class="veld">Ondergrond <select id="u-onder"><option value="luchtfoto">Luchtfoto</option><option value="topo">Topografisch</option><option value="grijs">Topografisch grijs</option><option value="bgt">BGT</option></select></label>
+        <p class="hint" id="u-maat"></p>
+      </section>
+      <section class="blok">
+        <h2>Uitsnede</h2>
+        <label class="check hint"><input type="checkbox" id="u-kader"> Printkader tonen op de kaart</label>
+        <p class="hint">Het gestippelde kader is precies het gebied dat op het blad komt. Versleep het met ⤧. Zonder kader wordt het midden van de kaart gebruikt.</p>
+      </section>
+      <section class="blok">
+        <h2>Hoeveelheden</h2>
+        <label class="veld">Toeslag bestellen (%) <input id="u-toeslag" type="number" min="0" max="50" step="1" inputmode="decimal"></label>
+        <p class="hint">Voor bijvoorbeeld inklinken en verlies; stel die in op basis van de leverancier. Bestelhoeveelheden worden naar boven afgerond op 0,5 m³.</p>
+      </section>
+      <section class="blok">
+        <div class="knoppen"><button class="knop hoofd" type="button" id="b-uitdraai">Maak uitdraai</button></div>
+      </section>
+    </div>
+
+    <!-- Tab Bestand -->
+    <div class="tabinhoud" data-tab="bestand" hidden>
+      <section class="blok">
+        <h2>Opslaan en openen</h2>
+        <p class="hint">Je werk wordt automatisch bewaard in deze browser op deze computer. Sla het als bestand op om het te bewaren, op een andere computer te openen of te delen.</p>
+        <div class="knoppen">
+          <button class="knop" type="button" id="b-opslaan">Opslaan als bestand</button>
+          <button class="knop" type="button" id="b-openen">Bestand openen</button>
+        </div>
+        <input type="file" id="f-open" accept=".geojson,.json,application/geo+json,application/json">
+        <p class="hint">Het bestand (.geojson) bevat de bomen en de groeiplaatsvakken en is ook te openen in QGIS of ArcGIS (coördinaten in ETRS89, EPSG:4258).</p>
+      </section>
+      <section class="blok">
+        <h2>Exporteren</h2>
+        <div class="knoppen">
+          <button class="knop" type="button" id="b-rd">GIS-bestand in RD</button>
+          <button class="knop" type="button" id="b-csv">Boomlijst voor Excel</button>
+        </div>
+        <p class="hint"><b>GIS-bestand in RD:</b> bomen en vakken in Rijksdriehoekscoördinaten (EPSG:28992), het stelsel van de meeste gemeentelijke GIS- en beheersystemen. Ook dit bestand kun je hier weer openen.</p>
+        <p class="hint"><b>Boomlijst voor Excel:</b> per boom soort, standplaats, kroon, m³ per materiaal en de coördinaten in RD en ETRS89.</p>
+      </section>
+      <section class="blok" id="rekenbasis">
+        <h2>Rekenbasis groeiplaats</h2>
+        <div class="rij2">
+          <label class="veld">Profieltype <select id="g-profiel"><option value="grondwater">Grondwater</option><option value="hangwater">Hangwater</option></select></label>
+          <label class="veld">Ambitieniveau <select id="g-niveau"><option value="optimaal">Optimaal</option><option value="redelijk">Redelijk</option><option value="marginaal">Marginaal</option></select></label>
+        </div>
+        <label class="veld">Omloop <select id="g-stap"></select></label>
+        <p class="hint" id="g-hint"></p>
+        <p class="hint">Materiaaladvies per vak is een vuistregel: bomengrond onder onverharde grond, bomenzand onder voet- en fietspaden, bomengranulaat onder rijbanen en parkeervakken. Toetsen aan het Handboek Bomen en de productinformatie van de leverancier.</p>
+      </section>
+      <section class="blok">
+        <h2>Opnieuw beginnen</h2>
+        <div class="knoppen"><button class="knop gevaar" type="button" id="b-nieuw">Nieuw ontwerp</button></div>
+      </section>
+    </div>
+    <p class="hint melding" id="melding" role="status"></p>
+    <p class="maker"><img src="beeldmerk.png" alt="">Ontwikkeld door J.L. Post Groenadvies</p>
+  </aside>
+</div>
+
+<div id="voorbeeld" hidden>
+  <div class="balk">
+    <button class="knop" type="button" id="v-terug">← Terug naar ontwerp</button>
+    <button class="knop hoofd" type="button" id="v-print" disabled>Kaart laden…</button>
+    <p class="hint">Kies in het printvenster "Opslaan als PDF" of je printer, met het juiste papierformaat, marges "Geen" en schaal 100%. Anders klopt de schaal niet.</p>
+  </div>
+  <div class="podium"><div id="bladhouder"><div id="blad"></div></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/polygon-clipping@0.15.7/dist/polygon-clipping.umd.min.js"></script>
+<script>
+const DATA = /*DATA*/null;
+const SOORTEN = [...DATA.bomen].sort((a, b) => a.wet.localeCompare(b.wet));
+const soortVan = wet => SOORTEN.find(s => s.wet === wet);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const wetHtml = s => esc(s).replace(/('[^']+')/g, '<span class="cv">$1</span>');
+const getal = (n, d = 1) => n.toLocaleString('nl-NL', { maximumFractionDigits: d });
+const $ = id => document.getElementById(id);
+
+const MATERIAAL = {
+  bomengrond: { naam: 'Bomengrond', kleur: '#7a5230' },
+  bomenzand: { naam: 'Bomenzand', kleur: '#e3c063' },
+  bomengranulaat: { naam: 'Bomengranulaat', kleur: '#6f8fa8' },
+};
+const BOVEN = { // wat er boven het vak ligt -> materiaaladvies (vuistregel)
+  onverhard: { naam: 'Onverhard (plantvak, gazon, boomspiegel)', advies: 'bomengrond' },
+  licht: { naam: 'Voetpad of fietspad', advies: 'bomenzand' },
+  zwaar: { naam: 'Rijbaan of parkeervak', advies: 'bomengranulaat' },
+};
+
+// ---------- Groeiplaatstabel (uit Excel-tabblad Groeiplaats) ----------
+const OMLOOP = {};
+DATA.groeiplaats.forEach(r => { (OMLOOP[r.groeiwijze] ||= new Set()).add(r.omloop); });
+Object.keys(OMLOOP).forEach(k => OMLOOP[k] = [...OMLOOP[k]].sort((a, b) => a - b));
+const STAPPEN = Math.max(0, ...Object.values(OMLOOP).map(o => o.length));
+function benodigd(s, reken) {
+  if (!s) return null;
+  if (s.m3 != null) return s.m3; // groeiplaatsverbetering per soort uit de bomenlijst
+  const w = s.groeiwijze || 'regulier', omloop = (OMLOOP[w] || [])[reken.stap];
+  const r = DATA.groeiplaats.find(r => r.grootte === s.grootte && r.groeiwijze === w && r.profiel === reken.profiel && r.niveau === reken.niveau && r.omloop === omloop);
+  return r && r.m3 != null ? r.m3 : null;
+}
+
+// ---------- Geometrie (vakken als hoekpunten in meters t.o.v. de boom: [oost, noord]) ----------
+const M = 111320; // grove waarde, alleen voor het printkader
+// Meters per graad op de GRS80-ellipsoïde (ETRS89) bij de breedte van de boom, zodat maten ook in GIS exact kloppen
+function mPerGraad(lat) {
+  const f = lat * Math.PI / 180, a = 6378137, e2 = 0.00669438002290;
+  const w = Math.sqrt(1 - e2 * Math.sin(f) ** 2);
+  return [Math.PI / 180 * a * Math.cos(f) / w, Math.PI / 180 * a * (1 - e2) / w ** 3]; // [oost, noord]
+}
+const naarLL = (b, [x, y]) => { const [mx, my] = mPerGraad(b.lat); return [b.lat + y / my, b.lng + x / mx]; };
+const naarXY = (b, ll) => { const [mx, my] = mPerGraad(b.lat); return [(ll.lng - b.lng) * mx, (ll.lat - b.lat) * my]; };
+const oppervlak = pts => Math.abs(pts.reduce((t, [x1, y1], i) => { const [x2, y2] = pts[(i + 1) % pts.length]; return t + x1 * y2 - x2 * y1; }, 0)) / 2;
+const midden = pts => [pts.reduce((t, p) => t + p[0], 0) / pts.length, pts.reduce((t, p) => t + p[1], 0) / pts.length];
+function rechthoek(cx, cy, l, br, graden) { // lengte langs noord, draaiing met de klok mee
+  const a = graden * Math.PI / 180;
+  return [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sy]) => { const x = sx * br / 2, y = sy * l / 2;
+    return [cx + x * Math.cos(a) + y * Math.sin(a), cy - x * Math.sin(a) + y * Math.cos(a)]; });
+}
+// Kroon in bovenaanzicht als handschets: onregelmatige omtrek, vaste vorm per boom (zaad = boom-id)
+function zaadVan(s) { let h = 2166136261; for (const c of String(s)) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; }
+function toeval(zaad) { let a = zaad; return () => { a = (a + 0x6D2B79F5) | 0; let x = Math.imul(a ^ (a >>> 15), 1 | a); x ^= x + Math.imul(x ^ (x >>> 7), 61 | x); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
+function kroonVorm(d, zaad = 1, factor = 1) {
+  const rnd = toeval(zaad), golven = [[3, .025], [5, .022], [7, .02], [11, .018], [13, .016], [17, .014], [23, .012], [31, .01], [41, .008]].map(([k, a]) => [k, a * (0.5 + rnd()), rnd() * 2 * Math.PI]);
+  return [...Array(180).keys()].map(i => { const t = 2 * Math.PI * i / 180;
+    const r = d / 2 * factor * (1 + golven.reduce((s, [k, a, p]) => s + a * Math.sin(k * t + p), 0));
+    return [r * Math.cos(t), r * Math.sin(t)]; });
+}
+const KROON_KLEUR = '#1f5d04';
+const KROON_STIJL = { color: KROON_KLEUR, weight: 1.6, fillColor: KROON_KLEUR, fillOpacity: 0.07, interactive: false, lineJoin: 'round' };
+const KROON_BINNEN = { color: KROON_KLEUR, weight: 1, fill: false, interactive: false, dashArray: '14 5 6 4 22 7 9 5' };
+// Lagen voor één kroon: witte rand (leesbaar op luchtfoto), buitenlijn en onderbroken binnenlijn
+function kroonLagen(b, d, dikte = 1) {
+  const z = zaadVan(b.id);
+  return [[z, 1, { color: '#fff', weight: 3.4 * dikte, opacity: 0.7, fill: false, interactive: false }],
+          [z, 1, { ...KROON_STIJL, weight: KROON_STIJL.weight * dikte }],
+          [z + 7, 0.93, { ...KROON_BINNEN, weight: KROON_BINNEN.weight * dikte }]]
+    .map(([zaad, factor, stijl]) => Object.assign(L.polygon(kroonVorm(d, zaad, factor).map(pt => naarLL(b, pt)), stijl), { _kroon: [zaad, factor] }));
+}
+// Klein kroonicoon voor de legenda
+function kroonIcoon(px = 16) {
+  const pad = (f, z) => 'M' + kroonVorm(px * 0.86, z, f).map(([x, y]) => (px / 2 + x).toFixed(2) + ' ' + (px / 2 - y).toFixed(2)).join('L') + 'Z';
+  return `<svg width="${px}" height="${px}" viewBox="0 0 ${px} ${px}" style="vertical-align:-3px;flex:none"><path d="${pad(1, 3)}" fill="#1f5d04" fill-opacity="0.07" stroke="#1f5d04" stroke-width="1"/><path d="${pad(0.9, 10)}" fill="none" stroke="#1f5d04" stroke-width="0.6" stroke-dasharray="4 1.5 2 1.5"/><path d="M${px / 2 - 2.5} ${px / 2}h5M${px / 2} ${px / 2 - 2.5}v5" stroke="#1f5d04" stroke-width="1"/></svg>`;
+}
+// Boomsymbool op de kaart: met bekende kroon alleen het stamkruisje (de kroon staat op ware grootte), anders een kroon van vaste grootte
+function boomSvg(zaad, metKroon, px = 40) {
+  const c = px / 2, kruis = `<path d="M${c - 5} ${c}h10M${c} ${c - 5}v10" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M${c - 5} ${c}h10M${c} ${c - 5}v10" stroke="#1f5d04" stroke-width="1.6" stroke-linecap="round"/>`;
+  if (metKroon) return `<svg width="${px}" height="${px}" viewBox="0 0 ${px} ${px}">${kruis}</svg>`;
+  const pad = (fac, z) => 'M' + kroonVorm(px * 0.9, z, fac).map(([x, y]) => (c + x).toFixed(2) + ' ' + (c - y).toFixed(2)).join('L') + 'Z';
+  return `<svg width="${px}" height="${px}" viewBox="0 0 ${px} ${px}"><path d="${pad(1, zaad)}" fill="#1f5d04" fill-opacity="0.1" stroke="#fff" stroke-width="3.2" stroke-opacity="0.75"/><path d="${pad(1, zaad)}" fill="none" stroke="#1f5d04" stroke-width="1.5" stroke-linejoin="round"/><path d="${pad(0.9, zaad + 7)}" fill="none" stroke="#1f5d04" stroke-width="0.9" stroke-dasharray="7 2.5 3 2 11 3"/>${kruis}</svg>`;
+}
+const symboolPx = zoom => Math.round(Math.max(40, Math.min(160, 160 * 2 ** (zoom - 21))));
+function boomIcoon(b, nr, klas = '', zoom = kaart.getZoom()) {
+  const mk = ontwerp.toonKroon && !!kroonVan(b).d, px = mk ? 40 : symboolPx(zoom);
+  const plek = mk ? '' : ` style="left:${Math.round(px * 0.88)}px;top:${Math.round(px * 0.02) - 6}px"`;
+  return L.divIcon({ className: 'boomicoon', html: `<div class="boomteken ${klas}${mk ? '' : ' vast'}" style="width:${px}px;height:${px}px">${boomSvg(zaadVan(b.id), mk, px)}<i class="greep" title="Boom ${nr}: klik om te bewerken, sleep om te verplaatsen"></i><b${plek}>${nr}</b></div>`, iconSize: [px, px], iconAnchor: [px / 2, px / 2] });
+}
+const cirkel = (d, n = 24) => [...Array(n).keys()].map(i => [d / 2 * Math.cos(2 * Math.PI * i / n), d / 2 * Math.sin(2 * Math.PI * i / n)]);
+const rond = v => Math.round(v * 100) / 100;
+// ETRS89 (lengte/breedte van de PDOK-kaart) -> RD New (EPSG:28992), in meters.
+// Benaderingsformules Schreutelkamp & Strang van Hees (2001), met vaste correctie (+0,185 / +0,233 m) zodat de uitkomst
+// aansluit op de RD-coördinaten van PDOK (getoetst op 10 adressen door heel Nederland: max. 0,6 cm verschil).
+function naarRD(lat, lng) {
+  const dF = 0.36 * (lat - 52.15517440), dL = 0.36 * (lng - 5.38720621);
+  const R = [[0, 1, 190094.945], [1, 1, -11832.228], [2, 1, -114.221], [0, 3, -32.391], [1, 0, -0.705], [3, 1, -2.340], [1, 3, -0.608], [0, 2, -0.008], [2, 3, 0.148]];
+  const S = [[1, 0, 309056.544], [0, 2, 3638.893], [2, 0, 73.077], [1, 2, -157.984], [3, 0, 59.788], [0, 1, 0.433], [2, 2, -6.439], [1, 1, -0.032], [0, 4, 0.092], [1, 4, -0.054]];
+  const som = c => c.reduce((s, [p, q, k]) => s + k * dF ** p * dL ** q, 0);
+  return [Math.round((155000.185 + som(R)) * 1000) / 1000, Math.round((463000.233 + som(S)) * 1000) / 1000];
+}
+// RD New -> ETRS89 [breedte, lengte]; zelfde formules en correctie (getoetst: max. 0,5 cm verschil met PDOK)
+function vanRD(x, y) {
+  const dX = (x - 155000.185) * 1e-5, dY = (y - 463000.233) * 1e-5;
+  const K = [[0, 1, 3235.65389], [2, 0, -32.58297], [0, 2, -0.24750], [2, 1, -0.84978], [0, 3, -0.06550], [2, 2, -0.01709], [1, 0, -0.00738], [4, 0, 0.00530], [2, 3, -0.00039], [4, 1, 0.00033], [1, 1, -0.00012]];
+  const L = [[1, 0, 5260.52916], [1, 1, 105.94684], [1, 2, 2.45656], [3, 0, -0.81885], [1, 3, 0.05594], [3, 1, -0.05607], [0, 1, 0.01199], [3, 2, -0.00256], [1, 4, 0.00128], [0, 2, 0.00022], [2, 0, -0.00022], [5, 0, 0.00026]];
+  const som = c => c.reduce((s, [p, q, k]) => s + k * dX ** p * dY ** q, 0);
+  return [52.15517440 + som(K) / 3600, 5.38720621 + som(L) / 3600];
+}
+
+// ---------- Toestand ----------
+const SLEUTEL = 'bst-ontwerp';
+const nieuwId = () => Math.random().toString(36).slice(2, 9);
+const STANDAARD_VAK = 4; // m, standaard lengte en breedte van een nieuw vak
+const nieuwVak = (boven, pts) => ({ id: nieuwId(), boven, mat: BOVEN[boven].advies, z: 1, pts, l: STANDAARD_VAK, b: STANDAARD_VAK, r: 0 });
+function normaliseer(b) { // oudere opslag (één rechthoek/cirkel) omzetten naar vakken
+  if (!b.vakken) {
+    const g = b.groeiplaats || { vorm: 'rechthoek', l: 2, b: 2, r: 0, d: 3, z: 1 };
+    const pts = g.vorm === 'cirkel' ? cirkel(g.d) : rechthoek(0, 0, g.l, g.b, g.r || 0);
+    b.vakken = [{ ...nieuwVak('onverhard', pts), z: g.z || 1, l: g.l || 2, b: g.b || 2, r: g.r || 0 }];
+    delete b.groeiplaats;
+  }
+  return b;
+}
+let ontwerp = { naam: '', reken: { profiel: 'grondwater', niveau: 'redelijk', stap: 1 }, bomen: [], kaart: null };
+try { const s = JSON.parse(localStorage.getItem(SLEUTEL)); if (s && Array.isArray(s.bomen)) ontwerp = { ...ontwerp, ...s, reken: { ...ontwerp.reken, ...s.reken } }; } catch (e) {}
+if (ontwerp.reken.stap >= STAPPEN) ontwerp.reken.stap = 0;
+let actief = null, actiefVak = null, plaatsen = false, laatsteSoort = '';
+let geschiedenis = [], laatsteStaat = null, laatstePush = 0;
+const staat = () => JSON.stringify({ ...ontwerp, kaart: undefined, bestaand: undefined });
+function bewaar() {
+  const s = staat();
+  if (laatsteStaat !== null && s !== laatsteStaat) {
+    const nu = Date.now();
+    if (nu - laatstePush > 800) { geschiedenis.push(laatsteStaat); if (geschiedenis.length > 60) geschiedenis.shift(); }
+    laatstePush = nu;
+  }
+  laatsteStaat = s;
+  const u = document.getElementById('b-undo'); if (u) u.disabled = !geschiedenis.length;
+  try { localStorage.setItem(SLEUTEL, JSON.stringify({ ...ontwerp, bestaand: undefined })); } catch (e) {}
+}
+// Bestaande bomen apart opslaan, zodat een groot bestand het ontwerp zelf nooit blokkeert
+let bestaand = null; // { naam, punten: [[lat, lng, soort, kroon]], toon }
+try { bestaand = JSON.parse(localStorage.getItem('bst-bestaand')); } catch (e) {}
+function bewaarBestaand() {
+  try { if (bestaand) localStorage.setItem('bst-bestaand', JSON.stringify(bestaand)); else localStorage.removeItem('bst-bestaand'); return true; }
+  catch (e) { return false; }
+}
+function normaliseerOntwerp() {
+  ontwerp.bomen ||= []; ontwerp.bomen.forEach(normaliseer);
+  if (ontwerp.toonKroon === undefined) ontwerp.toonKroon = true;
+  if (!ontwerp.plantjaar) ontwerp.plantjaar = new Date().getFullYear() + 1;
+  ontwerp.reken = { profiel: 'grondwater', niveau: 'redelijk', stap: 1, ...(ontwerp.reken || {}) };
+}
+const huidig = () => ontwerp.bomen.find(b => b.id === actief);
+const huidigVak = () => huidig()?.vakken.find(v => v.id === actiefVak);
+// Kroondiameter: eigen invoer bij de boom gaat voor; anders uit de bomenlijst
+function kroonVan(b) {
+  if (b.kroon > 0) return { d: b.kroon, bron: 'eigen' };
+  const s = soortVan(b.soort);
+  return s && s.kroon > 0 ? { d: s.kroon, bron: 'lijst', tekst: s.bron } : { d: null, bron: null };
+}
+const kroonM2 = b => { const k = kroonVan(b); return k.d ? Math.PI * (k.d / 2) ** 2 : 0; };
+
+// Kroonprojectie (m²) op een leeftijd na aanplant. Bij aanplant 0 (voorzichtig); tussen 0-10-20 jaar lineair;
+// na 20 jaar blijft de waarde van 20 jaar staan. Volwassen = kroon uit de lijst of eigen invoer. null = onbekend.
+function kroonOpLeeftijd(b, leeftijd) {
+  if (leeftijd === Infinity) return kroonM2(b) || null;
+  if (leeftijd <= 0) return 0;
+  const s = soortVan(b.soort), k10 = s?.kroon10, k20 = s?.kroon20;
+  if (leeftijd <= 10) return k10 != null ? k10 * leeftijd / 10 : null;
+  if (leeftijd <= 20) return k10 != null && k20 != null ? k10 + (k20 - k10) * (leeftijd - 10) / 10 : null;
+  return k20 ?? null;
+}
+// Oppervlak van de vereniging van kronen (cirkels), overlap één keer geteld, via een raster in meters
+function unieM2(kronen) {
+  const k = kronen.filter(c => c.m2 > 0);
+  if (!k.length) return 0;
+  const ref = k[0], totaal = k.reduce((s, c) => s + c.m2, 0), cel = totaal > 20000 ? 0.5 : 0.25;
+  const bezet = new Set();
+  for (const c of k) {
+    const [cx, cy] = naarXY(ref, { lat: c.lat, lng: c.lng }), rr = Math.sqrt(c.m2 / Math.PI);
+    for (let ix = Math.floor((cx - rr) / cel); ix <= Math.ceil((cx + rr) / cel); ix++)
+      for (let iy = Math.floor((cy - rr) / cel); iy <= Math.ceil((cy + rr) / cel); iy++) {
+        const x = (ix + 0.5) * cel - cx, y = (iy + 0.5) * cel - cy;
+        if (x * x + y * y <= rr * rr) bezet.add(ix + ',' + iy);
+      }
+  }
+  return bezet.size * cel * cel;
+}
+function nhvBijdrage(bomen) {
+  const momenten = [['In 2030', 2030], ['In 2040', 2040], ['Volwassen', Infinity]];
+  return momenten.map(([label, jaar]) => {
+    const leeftijd = jaar === Infinity ? Infinity : jaar - ontwerp.plantjaar;
+    const waarden = bomen.map(b => ({ lat: b.lat, lng: b.lng, m2: kroonOpLeeftijd(b, leeftijd) }));
+    const som = waarden.reduce((s, w) => s + (w.m2 || 0), 0);
+    return { label, m2: Math.min(som, unieM2(waarden.filter(w => w.m2 != null))), onbekend: waarden.filter(w => w.m2 == null).length, som: waarden.reduce((s, w) => s + (w.m2 || 0), 0) };
+  });
+}
+const onverhardM2 = bomen => { const eff = effectief(); return bomen.reduce((s, b) => s + b.vakken.reduce((t, v) => t + (v.boven === 'onverhard' ? (eff.get(v.id)?.m2 ?? oppervlak(v.pts)) : 0), 0), 0); };
+function nhvTabel(bomen) {
+  const rijen = nhvBijdrage(bomen);
+  return { html: '<tr><th>Moment</th><th>Kroonbedekking</th></tr>' + rijen.map(x => `<tr><td>${x.label}${x.onbekend ? ` <small class="hint">(${x.onbekend} zonder gegevens)</small>` : ''}</td><td>${getal(x.m2, 0)} m²</td></tr>`).join(''), rijen };
+}
+function toonNHV() {
+  const n = ontwerp.bomen.length;
+  $('nhvblok').hidden = !n; if (!n) return;
+  $('o-plantjaar').value = ontwerp.plantjaar;
+  const { html, rijen } = nhvTabel(ontwerp.bomen);
+  $('nhvtabel').innerHTML = html;
+  const overlap = rijen[2].som - rijen[2].m2, groen = onverhardM2(ontwerp.bomen);
+  $('nhvhint').textContent = `Overlappende kronen tellen één keer${overlap > 0.5 ? ` (bij volwassen bomen ${getal(overlap, 0)} m² overlap)` : ''}. Gerekend vanaf plantjaar ${ontwerp.plantjaar}: bij aanplant 0 m², daarna de kroon na 10 en 20 jaar uit de bomenlijst. Onverharde groeiplaats in het ontwerp: ${getal(groen, 0)} m²; die telt als extra groene ruimte als het nu verhard is.`;
+}
+
+// Waar vakken elkaar overlappen telt de overlap één keer. Voorrang: onverhard (boomspiegel) > rijbaan/parkeren > voet-/fietspad;
+// bij gelijke voorrang gaat het eerder getekende vak (eerdere boom, eerder vak) voor. Geldt ook tussen vakken van verschillende bomen.
+const VOORRANG = { onverhard: 0, zwaar: 1, licht: 2 };
+const voorrangVan = v => VOORRANG[v.boven] ?? 3;
+const multiOpp = mp => mp.reduce((s, poly) => s + poly.reduce((t, ring, i) => t + (i ? -1 : 1) * oppervlak(ring), 0), 0);
+let effCache = { sleutel: null, kaart: new Map(), ref: null };
+function effectief() {
+  const sleutel = JSON.stringify(ontwerp.bomen.map(b => [b.lat, b.lng, b.vakken.map(v => [v.id, v.boven, v.pts])]));
+  if (sleutel === effCache.sleutel) return effCache.kaart;
+  const kaartEff = new Map(), ref = ontwerp.bomen[0];
+  const items = [];
+  ontwerp.bomen.forEach((b, bi) => b.vakken.forEach((v, vi) => items.push({ v, bi, vi,
+    poly: [v.pts.map(pt => { const ll = naarLL(b, pt); return naarXY(ref, { lat: ll[0], lng: ll[1] }); })] })));
+  items.sort((a, c) => voorrangVan(a.v) - voorrangVan(c.v) || a.bi - c.bi || a.vi - c.vi);
+  let bezet = null;
+  for (const it of items) {
+    const getekend = oppervlak(it.v.pts);
+    let geo = [it.poly];
+    if (window.polygonClipping) {
+      try {
+        if (bezet) geo = polygonClipping.difference(it.poly, bezet);
+        bezet = bezet ? polygonClipping.union(bezet, it.poly) : [it.poly];
+      } catch (e) { geo = [it.poly]; }
+    }
+    kaartEff.set(it.v.id, { m2: window.polygonClipping ? multiOpp(geo) : getekend, getekend, geo });
+  }
+  effCache = { sleutel, kaart: kaartEff, ref };
+  return kaartEff;
+}
+function beoordeel(b) {
+  const eff = effectief();
+  const perVak = b.vakken.map(v => { const e = eff.get(v.id), m2 = e ? e.m2 : oppervlak(v.pts); return { m2, m3: m2 * v.z, getekend: e ? e.getekend : m2 }; });
+  const m2 = perVak.reduce((t, v) => t + v.m2, 0), m3 = perVak.reduce((t, v) => t + v.m3, 0);
+  const nodig = benodigd(soortVan(b.soort), ontwerp.reken);
+  const st = nodig == null ? 'onb' : m3 >= nodig ? 'ok' : m3 >= 0.75 * nodig ? 'krap' : 'nee';
+  return { m2, m3, nodig, st, perVak };
+}
+
+// ---------- Kaart (PDOK) ----------
+const kaart = L.map('kaart', { zoomControl: true, maxZoom: 21, doubleClickZoom: false }).setView(ontwerp.kaart?.c || [52.15, 5.3], ontwerp.kaart?.z || 8);
+const pdok = (url, attr, opt = {}) => L.tileLayer(url, { maxZoom: 21, maxNativeZoom: 19, attribution: attr, ...opt });
+const lagen = {
+  'Luchtfoto (PDOK)': pdok('https://service.pdok.nl/hwh/luchtfotorgb/wmts/v1_0/Actueel_orthoHR/EPSG:3857/{z}/{x}/{y}.jpeg', 'Luchtfoto © <a href="https://www.pdok.nl">PDOK</a> / Beeldmateriaal Nederland', { maxNativeZoom: 21 }),
+  'Topografische kaart': pdok('https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/standaard/EPSG:3857/{z}/{x}/{y}.png', 'Kaart © <a href="https://www.pdok.nl">PDOK</a> / Kadaster', { maxNativeZoom: 20 }),
+  'Topografisch grijs': pdok('https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/grijs/EPSG:3857/{z}/{x}/{y}.png', 'Kaart © <a href="https://www.pdok.nl">PDOK</a> / Kadaster', { maxNativeZoom: 20 }),
+};
+const extra = {
+  'BGT (grootschalige topografie)': pdok('https://service.pdok.nl/lv/bgt/wmts/v1_0/standaardvisualisatie/EPSG:3857/{z}/{x}/{y}.png', 'BGT © PDOK', { opacity: 0.85, maxNativeZoom: 22 }),
+  'Kadastrale grenzen': pdok('https://service.pdok.nl/kadaster/kadastralekaart/wmts/v5_0/Kadastralekaart/EPSG:3857/{z}/{x}/{y}.png', 'Kadastrale kaart © Kadaster'),
+};
+lagen['Luchtfoto (PDOK)'].addTo(kaart);
+L.control.layers(lagen, extra, { collapsed: true }).addTo(kaart);
+L.control.scale({ imperial: false }).addTo(kaart);
+kaart.attributionControl.setPrefix('Bomentool © J.L. Post Groenadvies · <a href="https://leafletjs.com">Leaflet</a>');
+const legenda = L.control({ position: 'bottomleft' });
+legenda.onAdd = () => { const d = L.DomUtil.create('div', 'legenda-kaart');
+  d.innerHTML = '<b>Vakken</b><br>' + Object.values(MATERIAAL).map(m => `<i style="background:${m.kleur}"></i>${m.naam}`).join('<br>') +
+    '<br>' + kroonIcoon(14) + ' Kroonprojectie volwassen' +
+    '<br><b>Kleur boomnummer: groeiplaats</b><br><i class="rond" style="background:#1f7a12"></i>voldoende <i class="rond" style="background:#a87400;margin-left:6px"></i>krap (75–100%)<br><i class="rond" style="background:#b8402f"></i>te klein (&lt; 75%) <i class="rond" style="background:#5e6b57;margin-left:6px"></i>geen norm';
+  return d; };
+legenda.addTo(kaart);
+kaart.on('zoomend', () => { if (ontwerp.bomen.some(b => !(ontwerp.toonKroon && kroonVan(b).d))) tekenAlles(); });
+kaart.on('moveend', () => { ontwerp.kaart = { c: [kaart.getCenter().lat, kaart.getCenter().lng], z: kaart.getZoom() }; bewaar(); });
+
+// ---------- Tekenen ----------
+const laag = L.layerGroup().addTo(kaart), grepen = L.layerGroup().addTo(kaart);
+const vlakken = new Map(); // vak-id -> polygon
+const kronen = new Map(); // boom-id -> polygon
+const vakStijl = (v, isActief) => ({ color: isActief ? '#f2b705' : '#1e2a19', weight: isActief ? 3 : 1.2, fillColor: MATERIAAL[v.mat].kleur, fillOpacity: 0.55 });
+function tekenAlles() {
+  laag.clearLayers(); vlakken.clear(); kronen.clear();
+  if (ontwerp.toonKroon) ontwerp.bomen.forEach(b => { const k = kroonVan(b);
+    if (k.d) { const lagenKroon = kroonLagen(b, k.d); kronen.set(b.id, lagenKroon); lagenKroon.forEach(p => laag.addLayer(p)); } });
+  ontwerp.bomen.flatMap(b => b.vakken.map(v => ({ b, v }))).sort((x, y) => voorrangVan(y.v) - voorrangVan(x.v)).forEach(({ b, v }) => {
+    const p = L.polygon(v.pts.map(pt => naarLL(b, pt)), vakStijl(v, b.id === actief && v.id === actiefVak));
+    p.on('click', e => { L.DomEvent.stopPropagation(e); if (plaatsen) plaatsBoom(e.latlng); else kies(b.id, v.id); });
+    vlakken.set(v.id, p); laag.addLayer(p);
+  });
+  ontwerp.bomen.forEach((b, i) => {
+    const { st } = beoordeel(b);
+    const pin = L.marker([b.lat, b.lng], { draggable: true, title: 'Boom ' + (i + 1), zIndexOffset: b.id === actief ? 1000 : 500,
+      icon: boomIcoon(b, i + 1, st + (b.id === actief ? ' actief' : '')) });
+    pin.on('click', e => { if (plaatsen) plaatsBoom(e.latlng); else kies(b.id); });
+    pin.on('drag', e => { b.lat = e.latlng.lat; b.lng = e.latlng.lng; b.vakken.forEach(v => vlakken.get(v.id)?.setLatLngs(v.pts.map(pt => naarLL(b, pt))));
+      const k = kroonVan(b); if (k.d) kronen.get(b.id)?.forEach(p => p.setLatLngs(kroonVorm(k.d, ...p._kroon).map(pt => naarLL(b, pt)))); grepen.clearLayers(); });
+    pin.on('dragend', () => { bewaar(); tekenGrepen(); });
+    laag.addLayer(pin);
+  });
+  tekenGrepen();
+}
+// Grepen om het actieve vak te bewerken: hoeken, middenpunten (hoek toevoegen) en verschuiven
+function tekenGrepen() {
+  grepen.clearLayers();
+  const b = huidig(), v = huidigVak();
+  if (!b || !v) return;
+  const poly = vlakken.get(v.id);
+  const herteken = () => poly.setLatLngs(v.pts.map(pt => naarLL(b, pt)));
+  const klaar = () => { bewaar(); tekenAlles(); toonVakken(); toonReken(b); toonLijst(); };
+  v.pts.forEach((pt, i) => {
+    const h = L.marker(naarLL(b, pt), { draggable: true, zIndexOffset: 2000, icon: L.divIcon({ className: '', html: '<div class="hoek"></div>', iconSize: [12, 12], iconAnchor: [6, 6] }) });
+    h.on('drag', e => { v.pts[i] = naarXY(b, e.latlng); herteken(); });
+    h.on('dragend', () => { v.vorm = 'vrij'; klaar(); });
+    h.on('dblclick', e => { L.DomEvent.stopPropagation(e); if (v.pts.length > 3) { v.pts.splice(i, 1); v.vorm = 'vrij'; herteken(); klaar(); } });
+    grepen.addLayer(h);
+    const nxt = v.pts[(i + 1) % v.pts.length];
+    const m = L.marker(naarLL(b, [(pt[0] + nxt[0]) / 2, (pt[1] + nxt[1]) / 2]), { draggable: true, zIndexOffset: 1900, icon: L.divIcon({ className: '', html: '<div class="midden"></div>', iconSize: [10, 10], iconAnchor: [5, 5] }) });
+    let ingevoegd = false;
+    m.on('dragstart', () => { v.pts.splice(i + 1, 0, [(pt[0] + nxt[0]) / 2, (pt[1] + nxt[1]) / 2]); ingevoegd = true; });
+    m.on('drag', e => { if (ingevoegd) { v.pts[i + 1] = naarXY(b, e.latlng); herteken(); } });
+    m.on('dragend', () => { v.vorm = 'vrij'; klaar(); });
+    grepen.addLayer(m);
+  });
+  const c = midden(v.pts);
+  const sch = L.marker(naarLL(b, c), { draggable: true, zIndexOffset: 2100, title: 'Vak verschuiven', icon: L.divIcon({ className: '', html: '<div class="verschuif">✥</div>', iconSize: [22, 22], iconAnchor: [11, 11] }) });
+  let start;
+  sch.on('dragstart', () => { start = v.pts.map(p => [...p]); });
+  sch.on('drag', e => { const [nx, ny] = naarXY(b, e.latlng), dx = nx - c[0], dy = ny - c[1]; v.pts = start.map(([x, y]) => [x + dx, y + dy]); herteken(); });
+  sch.on('dragend', klaar);
+  grepen.addLayer(sch);
+}
+
+// ---------- Paneel ----------
+function vulSoorten(b) {
+  const alle = $('e-alle').checked, p = b.standplaats;
+  const passend = SOORTEN.filter(s => alle || s[p] === 'ja' || s[p] === 'beperkt' || s.wet === b.soort);
+  const opt = s => `<option value="${esc(s.wet)}">${esc(s.wet)} · ${esc(s.nl)}${s[p] === 'ja' ? '' : ' (' + esc(s[p]) + ')'}</option>`;
+  $('e-soort').innerHTML = `<option value="">Kies een soort…</option>` + passend.map(opt).join('');
+  $('e-soort').value = b.soort || '';
+}
+function toonEditor() {
+  const b = huidig();
+  $('editor').hidden = !b; $('geen-boom').hidden = !!b;
+  $('tab-boom-nr').textContent = b ? ontwerp.bomen.indexOf(b) + 1 : '';
+  if (!b) return;
+  document.querySelectorAll('#e-plek button').forEach(el => el.setAttribute('aria-pressed', el.dataset.v === b.standplaats));
+  vulSoorten(b);
+  $('e-noot').value = b.noot || '';
+  toonKroonInfo(b);
+  toonVakken(); toonReken(b);
+}
+function toonKroonInfo(b) {
+  const s = soortVan(b.soort), uitLijst = s && s.kroon > 0 ? s.kroon : null;
+  $('e-kroon').value = b.kroon > 0 ? b.kroon : '';
+  $('e-kroon').placeholder = uitLijst ? getal(uitLijst) + ' (bomenlijst)' : 'nog onbekend';
+  $('e-kroonbron').textContent = b.kroon > 0 ? `Eigen invoer${uitLijst ? `; bomenlijst geeft ${getal(uitLijst)} m` : ''}. Maak leeg om de bomenlijst te volgen.`
+    : uitLijst ? `Uit de bomenlijst: ${getal(s.kroonM2)} m² kroon${s.bron ? ' (bron: ' + s.bron + ')' : ''}.`
+    : s ? 'De boomkroon (m²) voor deze soort staat nog niet in de bomenlijst. Vul hier de diameter in, of de m² in Excel voor alle bomen van deze soort.' : '';
+}
+const maatTekst = pv => `${getal(pv.m2)} m² · ${getal(pv.m3)} m³${pv.getekend - pv.m2 > 0.05 ? `<br><small>${getal(pv.getekend - pv.m2)} m² overlap afgetrokken</small>` : ''}`;
+function toonVakken() {
+  const b = huidig(); if (!b) return;
+  const { perVak } = beoordeel(b);
+  $('vakken').innerHTML = b.vakken.map((v, i) => `
+    <div class="vak${v.id === actiefVak ? ' actief' : ''}" data-vak="${v.id}">
+      <div class="vakkop"><span class="mat ${v.mat}"></span><b>Vak ${i + 1} · ${MATERIAAL[v.mat].naam}</b><span class="maat" data-maat="${v.id}">${maatTekst(perVak[i])}</span></div>
+      <div class="bewerk">
+        <label class="veld">Wat ligt er boven dit vak? <select data-k="boven">${Object.entries(BOVEN).map(([k, o]) => `<option value="${k}"${k === v.boven ? ' selected' : ''}>${o.naam}</option>`).join('')}</select></label>
+        <div class="rij2">
+          <label class="veld">Materiaal <select data-k="mat">${Object.entries(MATERIAAL).map(([k, o]) => `<option value="${k}"${k === v.mat ? ' selected' : ''}>${o.naam}${BOVEN[v.boven].advies === k ? ' (advies)' : ''}</option>`).join('')}</select></label>
+          <label class="veld">Diepte (m) <input data-k="z" type="number" min="0.2" max="3" step="0.1" value="${v.z}"></label>
+        </div>
+        <div class="groep">
+          <small>Vorm op de kaart aanpassen</small>
+          <p class="hint">Sleep de vierkantjes (hoeken) of de rondjes (nieuwe hoek). Met ✥ verschuif je het hele vak, bijvoorbeeld naar de wegkant. Dubbelklik op een hoek om hem te verwijderen.</p>
+        </div>
+        <div class="groep">
+          <small>${v.vorm === 'vrij' ? 'Maten: nu een vrije vorm' : 'Maten (de vorm past zich direct aan)'}</small>
+          ${v.vorm === 'vrij' ? '<p class="hint">Je hebt de hoeken versleept. Typ een maat of kies Rechthoek of Cirkel om er weer een nette vorm van te maken.</p>' : ''}
+          <div class="rij3">
+            <label class="veld">Lengte (m) <input data-k="l" type="number" min="0.5" step="0.5" value="${v.l}"></label>
+            <label class="veld">Breedte (m) <input data-k="b" type="number" min="0.5" step="0.5" value="${v.b}"></label>
+            <label class="veld">Draaiing (°) <input data-k="r" type="number" step="5" value="${v.r}"></label>
+          </div>
+          <div class="knoppen">
+            <button class="knop klein" type="button" data-actie="rechthoek" aria-pressed="${!v.vorm || v.vorm === 'rechthoek'}">Rechthoek L × B</button>
+            <button class="knop klein" type="button" data-actie="cirkel" aria-pressed="${v.vorm === 'cirkel'}">Cirkel Ø = lengte</button>
+          </div>
+        </div>
+        ${b.vakken.length > 1 ? '<div class="knoppen"><button class="knop klein gevaar" type="button" data-actie="wis">Verwijder dit vak</button></div>' : ''}
+      </div>
+    </div>`).join('');
+}
+function toonReken(b) {
+  const s = soortVan(b.soort), r = beoordeel(b);
+  $('r-m2').textContent = getal(r.m2) + ' m²';
+  $('r-m3').textContent = getal(r.m3) + ' m³';
+  $('r-nodig').textContent = r.nodig == null ? '–' : getal(r.nodig) + ' m³';
+  const st = $('r-status');
+  st.className = 'status ' + r.st;
+  st.textContent = !s ? 'Kies eerst een boomsoort.'
+    : r.st === 'onb' ? `Groeiplaatsverbetering voor deze soort is nog niet ingevuld in de bomenlijst.`
+    : r.st === 'ok' ? `Voldoende: ${getal(r.m3)} van ${getal(r.nodig)} m³ benodigd.`
+    : r.st === 'krap' ? `Krap: ${getal(r.m3 / r.nodig * 100, 0)}% van de benodigde ${getal(r.nodig)} m³.`
+    : `Te klein: ${getal(r.m3 / r.nodig * 100, 0)}% van de benodigde ${getal(r.nodig)} m³.`;
+  const w = $('e-waarsch'), oordeel = s && s[b.standplaats];
+  w.hidden = !s || oordeel === 'ja';
+  if (s && oordeel !== 'ja') w.textContent = oordeel === 'beperkt' ? `Beperkt geschikt voor ${b.standplaats}: ${s.noot}` : `Niet geschikt voor ${b.standplaats} volgens de bomenlijst.`;
+}
+function toonLijst() {
+  const n = ontwerp.bomen.length;
+  $('start').hidden = n > 0; $('overzicht').hidden = !n; $('bomenblok').hidden = !n; toonNHV();
+  if (!n) { $('lijst').innerHTML = ''; $('mattabel').innerHTML = ''; $('kengetallen').innerHTML = ''; return; }
+  const rs = ontwerp.bomen.map(beoordeel);
+  const tel = st => rs.filter(r => r.st === st).length;
+  const zonderSoort = ontwerp.bomen.filter(b => !b.soort).length, zonderKroon = ontwerp.bomen.filter(b => !kroonVan(b).d).length;
+  const kg = (label, waarde, let = false) => `<div${let ? ' class="let"' : ''}><small>${label}</small><b>${waarde}</b></div>`;
+  $('kengetallen').innerHTML = kg('Bomen', n) + kg('Groeiplaats', getal(rs.reduce((t, r) => t + r.m3, 0)) + ' m³') +
+    kg('Kroonprojectie', getal(ontwerp.bomen.reduce((t, b) => t + kroonM2(b), 0), 0) + ' m²') + kg('Te klein / krap', tel('nee') + ' / ' + tel('krap'), tel('nee') > 0) +
+    (zonderSoort ? kg('Zonder soort', zonderSoort, true) : '') + (zonderKroon ? kg('Zonder kroonmaat', zonderKroon) : '');
+  const perMat = {};
+  ontwerp.bomen.forEach((b, i) => b.vakken.forEach((v, j) => { perMat[v.mat] = (perMat[v.mat] || 0) + rs[i].perVak[j].m3; }));
+  $('mattabel').innerHTML = Object.keys(MATERIAAL).filter(k => perMat[k]).map(k => `<tr><td><span class="mat ${k}"></span>${MATERIAAL[k].naam}</td><td>${getal(perMat[k])} m³</td></tr>`).join('');
+  $('lijst').innerHTML = ontwerp.bomen.map((b, i) => { const s = soortVan(b.soort);
+    return `<li><button type="button" data-id="${b.id}" aria-current="${b.id === actief}"><span class="nr ${rs[i].st}">${i + 1}</span><span>${s ? `<span class="wet">${wetHtml(s.wet)}</span>` : '<em>Geen soort gekozen</em>'}<br><small class="hint">${esc(b.standplaats)} · ${b.vakken.length} ${b.vakken.length === 1 ? 'vak' : 'vakken'} · ${getal(rs[i].m3)} m³</small></span></button></li>`; }).join('');
+}
+function verversAlles() { tekenAlles(); toonEditor(); toonLijst(); bewaar(); }
+function kies(id, vakId) { actief = id; const b = huidig(); actiefVak = vakId || (b && (b.vakken.find(v => v.id === actiefVak) ? actiefVak : b.vakken[0]?.id)) || null; verversAlles(); if (b) toonTab('boom'); }
+// Tabbladen
+function toonTab(naam) {
+  document.querySelectorAll('.tabs [data-tab]').forEach(k => k.setAttribute('aria-selected', k.dataset.tab === naam));
+  document.querySelectorAll('.tabinhoud').forEach(p => p.hidden = p.dataset.tab !== naam);
+}
+document.querySelectorAll('.tabs [data-tab]').forEach(k => k.addEventListener('click', () => toonTab(k.dataset.tab)));
+
+// ---------- Bomen plaatsen ----------
+const plaatsControl = L.control({ position: 'topleft' });
+plaatsControl.onAdd = () => { const k = L.DomUtil.create('button', 'kaartknop'); k.type = 'button'; k.id = 'k-plaats'; k.textContent = '+ Boom plaatsen';
+  L.DomEvent.disableClickPropagation(k); k.addEventListener('click', () => zetPlaatsen(!plaatsen)); return k; };
+plaatsControl.addTo(kaart);
+const banner = L.DomUtil.create('div', 'plaatsbanner', kaart.getContainer()); banner.hidden = true;
+banner.textContent = 'Klik op de kaart om een boom te plaatsen · Esc om te stoppen';
+function zetPlaatsen(aan) {
+  plaatsen = aan; banner.hidden = !aan; $('kaart').classList.toggle('plaatsen', aan);
+  [['b-plaats', 'Stop met plaatsen'], ['k-plaats', 'Stop met plaatsen']].forEach(([id, stop]) => { const k = $(id); if (k) { k.setAttribute('aria-pressed', aan); k.textContent = aan ? stop : '+ Boom plaatsen'; } });
+}
+$('b-plaats').addEventListener('click', () => zetPlaatsen(!plaatsen));
+function plaatsBoom(latlng) {
+  const vorige = huidig();
+  const vakken = vorige ? vorige.vakken.map(v => ({ ...v, id: nieuwId(), pts: v.pts.map(p => [...p]) })) : [nieuwVak('onverhard', rechthoek(0, 0, STANDAARD_VAK, STANDAARD_VAK, 0))];
+  const b = { id: nieuwId(), lat: latlng.lat, lng: latlng.lng, soort: laatsteSoort, standplaats: vorige?.standplaats || 'verharding', vakken, noot: '' };
+  ontwerp.bomen.push(b); kies(b.id);
+}
+kaart.on('click', e => { if (plaatsen) plaatsBoom(e.latlng); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && plaatsen) zetPlaatsen(false); });
+
+// ---------- Editor ----------
+document.querySelectorAll('#e-plek button').forEach(el => el.addEventListener('click', () => { huidig().standplaats = el.dataset.v; verversAlles(); }));
+$('e-alle').addEventListener('change', () => { const b = huidig(); if (b) vulSoorten(b); });
+$('e-soort').addEventListener('change', e => { huidig().soort = laatsteSoort = e.target.value; verversAlles(); });
+$('e-noot').addEventListener('input', e => { huidig().noot = e.target.value; bewaar(); });
+$('e-kroon').addEventListener('change', e => { const v = parseFloat(e.target.value), b = huidig(); b.kroon = v > 0 ? v : null; verversAlles(); });
+$('o-kroon').addEventListener('change', e => { ontwerp.toonKroon = e.target.checked; verversAlles(); });
+$('b-wis').addEventListener('click', () => verwijderBoom());
+$('b-kopie').addEventListener('click', () => { const b = huidig(); const c = { ...b, id: nieuwId(), lat: b.lat + 0.00004, lng: b.lng + 0.00004, vakken: b.vakken.map(v => ({ ...v, id: nieuwId(), pts: v.pts.map(p => [...p]) })) }; ontwerp.bomen.push(c); kies(c.id); });
+$('lijst').addEventListener('click', e => { const t = e.target.closest('button[data-id]'); if (!t) return; kies(t.dataset.id); const b = huidig(); kaart.setView([b.lat, b.lng], Math.max(kaart.getZoom(), 19)); });
+$('b-vak').addEventListener('click', () => {
+  const b = huidig(), v = huidigVak(), c = v ? midden(v.pts) : [0, 0];
+  const nv = nieuwVak('licht', rechthoek(c[0] + STANDAARD_VAK, c[1], STANDAARD_VAK, STANDAARD_VAK, 0)); // direct naast het huidige vak
+  b.vakken.push(nv); actiefVak = nv.id; verversAlles();
+});
+$('vakken').addEventListener('click', e => {
+  const el = e.target.closest('.vak'); if (!el) return;
+  const b = huidig(), v = b.vakken.find(v => v.id === el.dataset.vak);
+  const actie = e.target.closest('[data-actie]')?.dataset.actie;
+  if (actie === 'wis') { b.vakken = b.vakken.filter(x => x !== v); actiefVak = b.vakken[0]?.id; verversAlles(); return; }
+  if (actie === 'rechthoek' || actie === 'cirkel') {
+    v.vorm = actie; vormUitMaten(v); verversAlles(); return;
+  }
+  if (v.id !== actiefVak) { actiefVak = v.id; verversAlles(); }
+});
+// Vorm opnieuw opbouwen rond het huidige midden van het vak, uit de ingevulde maten
+function vormUitMaten(v) {
+  const c = midden(v.pts);
+  v.pts = v.vorm === 'cirkel' ? cirkel(v.l).map(([x, y]) => [x + c[0], y + c[1]]) : rechthoek(c[0], c[1], v.l, v.b, v.r);
+}
+$('vakken').addEventListener('input', e => {
+  const k = e.target.dataset.k; if (!['l', 'b', 'r'].includes(k)) return;
+  const n = parseFloat(String(e.target.value).replace(',', '.')); if (isNaN(n) || (k !== 'r' && n < 0.1)) return;
+  const b = huidig(), v = huidigVak(); v[k] = n;
+  if (v.vorm === 'vrij') { v.vorm = 'rechthoek'; toonVakken(); const veld = document.querySelector(`#vakken .vak.actief input[data-k="${k}"]`); if (veld) { veld.focus(); veld.setSelectionRange?.(veld.value.length, veld.value.length); } }
+  vormUitMaten(v);
+  // alleen kaart en getallen verversen, niet de invoervelden (dan blijf je gewoon doortypen)
+  tekenAlles(); toonReken(b); toonLijst();
+  const i = b.vakken.indexOf(v), pv = beoordeel(b).perVak[i];
+  const m = document.querySelector(`[data-maat="${v.id}"]`); if (m) m.innerHTML = maatTekst(pv);
+  b.vakken.forEach((x, j) => { if (x !== v) { const el = document.querySelector(`[data-maat="${x.id}"]`); if (el) el.innerHTML = maatTekst(beoordeel(b).perVak[j]); } });
+  bewaar();
+});
+$('vakken').addEventListener('change', e => {
+  const k = e.target.dataset.k; if (!k) return;
+  const v = huidigVak();
+  if (k === 'boven') { v.boven = e.target.value; v.mat = BOVEN[v.boven].advies; }
+  else if (k === 'mat') v.mat = e.target.value;
+  else { const n = parseFloat(e.target.value); if (isNaN(n) || (k !== 'r' && n <= 0)) return; v[k] = n; if (k !== 'z') { vormUitMaten(v); } }
+  verversAlles();
+});
+
+// ---------- Rekenbasis ----------
+$('g-stap').innerHTML = [...Array(STAPPEN).keys()].map(i => `<option value="${i}">${Object.keys(OMLOOP).map(w => `${OMLOOP[w][i]} jaar${w === 'regulier' ? '' : ' (' + w + ')'}`).join(' · ')}</option>`).join('');
+function toonRekenbasis() {
+  $('g-profiel').value = ontwerp.reken.profiel; $('g-niveau').value = ontwerp.reken.niveau; $('g-stap').value = ontwerp.reken.stap;
+  const n = DATA.groeiplaats.filter(r => r.m3 != null).length;
+  if (!DATA.groeiplaats.length) {
+    document.querySelectorAll('#g-profiel, #g-niveau, #g-stap').forEach(el => el.closest('label').hidden = true);
+    const k = SOORTEN.filter(s => s.m3 != null).length;
+    $('g-hint').textContent = `De benodigde groeiplaatsverbetering komt per soort uit de bomenlijst: ${k} van ${SOORTEN.length} soorten ingevuld.`;
+    return;
+  }
+  $('g-hint').textContent = n ? `${n} van ${DATA.groeiplaats.length} normwaarden ingevuld.` : 'De groeiplaatsnormen zijn nog niet ingevuld in Excel; de tool rekent wel m² en m³, maar toetst nog niet.';
+}
+['profiel', 'niveau', 'stap'].forEach(k => $('g-' + k).addEventListener('change', e => { ontwerp.reken[k] = k === 'stap' ? +e.target.value : e.target.value; verversAlles(); }));
+$('o-naam').addEventListener('input', e => { ontwerp.naam = e.target.value; bewaar(); });
+
+// ---------- Adres zoeken (PDOK Locatieserver) ----------
+let zoekTimer, zoekCtrl;
+$('zoek').addEventListener('input', e => {
+  clearTimeout(zoekTimer); const q = e.target.value.trim();
+  if (q.length < 3) { $('zoek-res').hidden = true; return; }
+  zoekTimer = setTimeout(async () => {
+    zoekCtrl?.abort(); zoekCtrl = new AbortController();
+    try {
+      const r = await fetch(`https://api.pdok.nl/bzk/locatieserver/search/v3_1/free?q=${encodeURIComponent(q)}&rows=6&fl=weergavenaam,centroide_ll,type`, { signal: zoekCtrl.signal });
+      const docs = (await r.json()).response.docs;
+      $('zoek-res').innerHTML = docs.map(d => { const m = /POINT\(([\d.]+) ([\d.]+)\)/.exec(d.centroide_ll);
+        return m ? `<li><button type="button" data-lat="${m[2]}" data-lng="${m[1]}" data-type="${esc(d.type)}">${esc(d.weergavenaam)} <small>${esc(d.type)}</small></button></li>` : ''; }).join('') || '<li class="hint" style="padding:7px 9px">Niets gevonden.</li>';
+      $('zoek-res').hidden = false;
+    } catch (err) { if (err.name !== 'AbortError') { $('zoek-res').innerHTML = '<li class="hint" style="padding:7px 9px">Zoeken lukt niet. Controleer de internetverbinding.</li>'; $('zoek-res').hidden = false; } }
+  }, 250);
+});
+$('zoek-res').addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  const zoom = { adres: 20, weg: 18, postcode: 18, woonplaats: 15, gemeente: 13 }[t.dataset.type] || 17;
+  kaart.setView([+t.dataset.lat, +t.dataset.lng], zoom); $('zoek-res').hidden = true;
+});
+document.addEventListener('click', e => { if (!e.target.closest('.zoek')) $('zoek-res').hidden = true; });
+$('zoek').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { const eerste = $('zoek-res').querySelector('button'); if (eerste && !$('zoek-res').hidden) { e.preventDefault(); eerste.click(); } }
+  else if (e.key === 'Escape') $('zoek-res').hidden = true;
+});
+
+// ---------- Opslaan / openen ----------
+let meldingTimer;
+const melding = t => { $('melding').textContent = t; clearTimeout(meldingTimer); meldingTimer = setTimeout(() => $('melding').textContent = '', 6000); };
+const bestandsnaam = ext => (ontwerp.naam || 'ontwerp').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').toLowerCase() + ext;
+function bewaarBestand(inhoud, naam, type) {
+  const url = URL.createObjectURL(new Blob([inhoud], { type }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: naam });
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+// GeoJSON met bomen (punten) en vakken (vlakken): ook te openen in QGIS of ArcGIS
+function maakGeoJSON(rd) {
+  const punt = (lat, lng) => rd ? naarRD(lat, lng) : [lng, lat];
+  const features = [];
+  ontwerp.bomen.forEach((b, i) => {
+    const s = soortVan(b.soort), r = beoordeel(b);
+    const [xRD, yRD] = naarRD(b.lat, b.lng);
+    features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: punt(b.lat, b.lng) },
+      properties: { soort_object: 'boom', nr: i + 1, x_rd: xRD, y_rd: yRD, soort: b.soort, nederlandse_naam: s?.nl || '', standplaats: b.standplaats, kroon_m: kroonVan(b).d, kroonprojectie_m2: rond(kroonM2(b)), volume_m3: rond(r.m3), benodigd_m3: r.nodig, opmerking: b.noot || '' } });
+    const eff = effectief();
+    b.vakken.forEach((v, j) => {
+      const e = eff.get(v.id), sluit = ring => [...ring, ring[0]];
+      const geometry = e && effCache.ref && window.polygonClipping
+        ? { type: 'MultiPolygon', coordinates: e.geo.map(poly => poly.map(ring => sluit(ring.slice(0, ring.length - (ring.length > 1 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1] ? 1 : 0)).map(([x, y]) => punt(...naarLL(effCache.ref, [x, y])))))) }
+        : { type: 'Polygon', coordinates: [sluit(v.pts.map(pt => naarLL(b, pt)).map(([la, ln]) => punt(la, ln)))] };
+      features.push({ type: 'Feature', geometry,
+        properties: { soort_object: 'groeiplaatsvak', boom_nr: i + 1, vak_nr: j + 1, materiaal: v.mat, boven: v.boven, diepte_m: v.z, oppervlak_m2: rond(r.perVak[j].m2), getekend_m2: rond(r.perVak[j].getekend), volume_m3: rond(r.perVak[j].m3) } });
+    });
+  });
+  // Coördinatenstelsel expliciet vermelden: de PDOK-kaart werkt in ETRS89 (EPSG:4258), RD is EPSG:28992
+  const crs = { type: 'name', properties: { name: rd ? 'urn:ogc:def:crs:EPSG::28992' : 'urn:ogc:def:crs:EPSG::4258' } };
+  return { type: 'FeatureCollection', name: ontwerp.naam, crs, bst: { versie: 2, ontwerp }, features };
+}
+$('b-opslaan').addEventListener('click', () => {
+  bewaarBestand(JSON.stringify(maakGeoJSON(false)), bestandsnaam('.geojson'), 'application/geo+json');
+  melding('Opgeslagen als ' + bestandsnaam('.geojson') + ' (in je map Downloads).');
+});
+$('b-rd').addEventListener('click', () => {
+  bewaarBestand(JSON.stringify(maakGeoJSON(true)), bestandsnaam('-RD.geojson'), 'application/geo+json');
+  melding('GIS-bestand in RD opgeslagen als ' + bestandsnaam('-RD.geojson') + ' (in je map Downloads).');
+});
+$('b-openen').addEventListener('click', () => $('f-open').click());
+$('f-open').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const fc = JSON.parse(await f.text());
+    if (fc.bst?.ontwerp) ontwerp = { ...fc.bst.ontwerp, kaart: ontwerp.kaart };
+    else { // ouder bestand of alleen punten
+      const bomen = fc.features.filter(ft => ft.geometry?.type === 'Point').map(ft => { const p = ft.properties || {};
+        return normaliseer({ id: p.id || nieuwId(), lng: ft.geometry.coordinates[0], lat: ft.geometry.coordinates[1], soort: p.soort || '', standplaats: p.standplaats || 'verharding', noot: p.opmerking || '',
+          groeiplaats: { vorm: p.gp_vorm || 'rechthoek', l: +p.gp_l || 2, b: +p.gp_b || 2, r: +p.gp_r || 0, d: +p.gp_d || 3, z: +p.gp_z || 1 } }); });
+      ontwerp = { naam: fc.name || f.name.replace(/\.\w+$/, ''), reken: { ...ontwerp.reken, ...(fc.bst?.reken || {}) }, bomen, kaart: ontwerp.kaart };
+    }
+    normaliseerOntwerp(); actief = actiefVak = null; verversUI(); toonTab('ontwerp');
+    if (ontwerp.bomen.length) kaart.fitBounds(L.latLngBounds(ontwerp.bomen.map(b => [b.lat, b.lng])).pad(0.3), { maxZoom: 19 });
+    melding(`${ontwerp.bomen.length} bomen geladen uit ${f.name}.`);
+  } catch (err) { melding('Dit bestand kan niet worden gelezen. Kies een .geojson-bestand dat met deze tool is opgeslagen.'); }
+  e.target.value = '';
+});
+$('b-csv').addEventListener('click', () => {
+  const n = v => String(rond(v)).replace('.', ',');
+  const kop = ['Nr', 'Wetenschappelijke naam', 'Nederlandse naam', 'Grootte', 'Standplaats', 'Geschikt', 'Kroon Ø (m)', 'Kroonprojectie (m2)', 'Aantal vakken', ...Object.values(MATERIAAL).map(m => m.naam + ' (m3)'), 'Totaal volume (m3)', 'Benodigd (m3)', 'Opmerking', 'X RD (m)', 'Y RD (m)', 'Lengtegraad (ETRS89)', 'Breedtegraad (ETRS89)'];
+  const rijen = ontwerp.bomen.map((b, i) => { const s = soortVan(b.soort), r = beoordeel(b);
+    const mat = k => n(b.vakken.reduce((t, v, j) => t + (v.mat === k ? r.perVak[j].m3 : 0), 0));
+    return [i + 1, b.soort, s?.nl || '', s?.grootte || '', b.standplaats, s ? s[b.standplaats] : '', kroonVan(b).d ? n(kroonVan(b).d) : '', kroonM2(b) ? n(kroonM2(b)) : '', b.vakken.length, ...Object.keys(MATERIAAL).map(mat), n(r.m3), r.nodig == null ? '' : n(r.nodig), b.noot || '', ...naarRD(b.lat, b.lng).map(v => v.toFixed(2).replace('.', ',')), b.lng.toFixed(7), b.lat.toFixed(7)]; });
+  const csv = '﻿' + [kop, ...rijen].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  bewaarBestand(csv, bestandsnaam('-boomlijst.csv'), 'text/csv');
+  melding('Boomlijst opgeslagen (in je map Downloads). Opent in Excel.');
+});
+let nieuwBevestig = false;
+$('b-nieuw').addEventListener('click', () => {
+  if (ontwerp.bomen.length && !nieuwBevestig) { nieuwBevestig = true; $('b-nieuw').textContent = 'Zeker weten? Klik nogmaals'; setTimeout(() => { nieuwBevestig = false; $('b-nieuw').textContent = 'Nieuw ontwerp'; }, 4000); return; }
+  nieuwBevestig = false; $('b-nieuw').textContent = 'Nieuw ontwerp';
+  ontwerp = { ...ontwerp, naam: '', bomen: [] }; actief = actiefVak = null; verversUI(); toonTab('ontwerp'); melding('Nieuw ontwerp gestart. Met Ongedaan maken haal je het vorige terug.');
+});
+
+// ---------- Uitdraai op schaal ----------
+const TEGELS = {
+  luchtfoto: ['https://service.pdok.nl/hwh/luchtfotorgb/wmts/v1_0/Actueel_orthoHR/EPSG:3857/{z}/{x}/{y}.jpeg', 'Luchtfoto PDOK / Beeldmateriaal Nederland (actueel)', 21],
+  topo: ['https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/standaard/EPSG:3857/{z}/{x}/{y}.png', 'BRT Achtergrondkaart, PDOK / Kadaster', 20],
+  grijs: ['https://service.pdok.nl/brt/achtergrondkaart/wmts/v2_0/grijs/EPSG:3857/{z}/{x}/{y}.png', 'BRT Achtergrondkaart grijs, PDOK / Kadaster', 20],
+  bgt: ['https://service.pdok.nl/lv/bgt/wmts/v1_0/standaardvisualisatie/EPSG:3857/{z}/{x}/{y}.png', 'BGT standaardvisualisatie, PDOK', 22],
+};
+const PAPIER = { A4: [297, 210], A3: [420, 297], A2: [594, 420], A1: [841, 594], A0: [1189, 841] }; // liggend, mm
+const ZIJ = { A4: 72, A3: 88, A2: 105, A1: 125, A0: 150 }; // breedte legendakolom, mm
+const LETTER = { A4: 6.5, A3: 7.5, A2: 9, A1: 10.5, A0: 12.5 }; // pt
+const MARGE = 10, GAT = 5;
+const UIT_STANDAARD = { formaat: 'A3', richting: 'liggend', schaal: 200, onder: 'luchtfoto', toeslag: 0, kader: false, c: null };
+ontwerp.uitdraai = { ...UIT_STANDAARD, ...(ontwerp.uitdraai || {}) };
+const uit = () => (ontwerp.uitdraai ||= { ...UIT_STANDAARD });
+
+function bladMaten(u) {
+  let [w, h] = PAPIER[u.formaat];
+  if (u.richting === 'staand') [w, h] = [h, w];
+  const zij = ZIJ[u.formaat];
+  return { w, h, zij, kw: w - 2 * MARGE - zij - GAT, kh: h - 2 * MARGE };
+}
+function kaderGrenzen(c, u) {
+  const { kw, kh } = bladMaten(u), wm = kw * u.schaal / 1000, hm = kh * u.schaal / 1000;
+  const dLat = hm / 2 / M, dLng = wm / 2 / (M * Math.cos(c[0] * Math.PI / 180));
+  return [[c[0] - dLat, c[1] - dLng], [c[0] + dLat, c[1] + dLng]];
+}
+const kaderLaag = L.layerGroup().addTo(kaart);
+function tekenKader() {
+  kaderLaag.clearLayers();
+  const u = uit(); if (!u.kader) return;
+  if (!u.c) { u.c = [kaart.getCenter().lat, kaart.getCenter().lng]; bewaar(); }
+  const r = L.rectangle(kaderGrenzen(u.c, u), { color: '#1e2a19', weight: 2, dashArray: '8 6', fill: false, interactive: false });
+  const g = L.marker(u.c, { draggable: true, zIndexOffset: 3000, title: 'Printkader verschuiven', icon: L.divIcon({ className: '', html: '<div class="kadergreep">⤧</div>', iconSize: [26, 26], iconAnchor: [13, 13] }) });
+  g.on('drag', e => r.setBounds(kaderGrenzen([e.latlng.lat, e.latlng.lng], u)));
+  g.on('dragend', e => { const ll = e.target.getLatLng(); u.c = [ll.lat, ll.lng]; bewaar(); });
+  kaderLaag.addLayer(r).addLayer(g);
+}
+function toonKaartbeeld() {
+  const u = uit(), m = bladMaten(u);
+  $('u-maat').textContent = `Kaartbeeld op dit blad: ${getal(m.kw * u.schaal / 1000, 0)} × ${getal(m.kh * u.schaal / 1000, 0)} m in werkelijkheid.`;
+}
+function toonUitdraaiInstellingen() {
+  const u = uit(); toonKaartbeeld();
+  $('u-formaat').value = u.formaat; $('u-richting').value = u.richting; $('u-schaal').value = u.schaal;
+  $('u-onder').value = u.onder; $('u-toeslag').value = u.toeslag; $('u-kader').checked = u.kader;
+}
+[['u-formaat', 'formaat'], ['u-richting', 'richting'], ['u-schaal', 'schaal', Number], ['u-onder', 'onder'], ['u-toeslag', 'toeslag', Number]].forEach(([id, k, f]) =>
+  $(id).addEventListener('change', e => { const v = f ? f(e.target.value) : e.target.value; if (f && (isNaN(v) || v < 0)) return; uit()[k] = v; bewaar(); tekenKader(); toonKaartbeeld(); }));
+$('u-kader').addEventListener('change', e => { const u = uit(); u.kader = e.target.checked; if (u.kader) u.c = [kaart.getCenter().lat, kaart.getCenter().lng]; bewaar(); tekenKader(); });
+
+function schaalbalk(N, kw) {
+  const opties = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
+  let lengte = opties[0];
+  for (const o of opties) if (o * 1000 / N <= kw * 0.22) lengte = o;
+  const mm = lengte * 1000 / N, x0 = 3, w = mm + 12;
+  const blokken = [0, 1, 2, 3].map(i => `<rect x="${x0 + i * mm / 4}" y="1" width="${mm / 4}" height="2" fill="${i % 2 ? '#fff' : '#111'}" stroke="#111" stroke-width="0.2"/>`).join('');
+  const tekst = (x, t, anchor = 'middle') => `<text x="${x}" y="6.6" font-size="2.6" text-anchor="${anchor}" font-family="Arial, sans-serif">${t}</text>`;
+  return `<svg width="${w}mm" height="10mm" viewBox="0 0 ${w} 10">${blokken}${tekst(x0, '0')}${tekst(x0 + mm / 2, getal(lengte / 2))}${tekst(x0 + mm, getal(lengte) + ' m')}<text x="${x0}" y="9.6" font-size="2.3" font-family="Arial, sans-serif">Schaal 1:${N}</text></svg>`;
+}
+const NOORD = '<svg width="9mm" height="13mm" viewBox="0 0 9 13"><text x="4.5" y="3.4" font-size="3.4" font-weight="700" text-anchor="middle" font-family="Arial, sans-serif">N</text><path d="M4.5 4.2 L8 12.5 L4.5 10.4 L1 12.5 Z" fill="#111"/><path d="M4.5 4.2 L4.5 10.4 L1 12.5 Z" fill="#fff" stroke="#111" stroke-width="0.25"/></svg>';
+
+let printkaart = null, paginaStijl = null;
+function sluitVoorbeeld() { $('voorbeeld').hidden = true; printkaart?.remove(); printkaart = null; }
+function pasVoorbeeldAan() {
+  const blad = $('blad'), u = uit(), m = bladMaten(u), px = mm => mm * 96 / 25.4;
+  const ruimte = document.querySelector('#voorbeeld .podium').clientWidth - 40;
+  const s = Math.min(1, ruimte / px(m.w));
+  blad.style.transform = `scale(${s})`;
+  $('bladhouder').style.width = px(m.w) * s + 'px'; $('bladhouder').style.height = px(m.h) * s + 'px';
+}
+function maakUitdraai() {
+  const u = uit(), m = bladMaten(u);
+  const c = u.kader && u.c ? u.c : [kaart.getCenter().lat, kaart.getCenter().lng];
+  const blad = $('blad');
+  Object.assign(blad.style, { width: m.w + 'mm', height: m.h + 'mm', padding: MARGE + 'mm', gap: GAT + 'mm', gridTemplateColumns: `${m.kw}mm ${m.zij}mm`, fontSize: LETTER[u.formaat] + 'pt' });
+  blad.innerHTML = `<div class="kaartvak" style="width:${m.kw}mm;height:${m.kh}mm"><div class="pk" id="pk"></div><div class="noord">${NOORD}</div><div class="schaalbalk">${schaalbalk(u.schaal, m.kw)}</div></div><div class="zij" id="zij" style="height:${m.kh}mm"></div>`;
+  paginaStijl ||= document.head.appendChild(document.createElement('style'));
+  paginaStijl.textContent = `@page { size: ${m.w}mm ${m.h}mm; margin: 0; }`;
+  $('voorbeeld').hidden = false; pasVoorbeeldAan();
+
+  printkaart?.remove();
+  printkaart = L.map('pk', { zoomControl: false, attributionControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, boxZoom: false, keyboard: false, touchZoom: false, zoomSnap: 0, maxZoom: 24, fadeAnimation: false, zoomAnimation: false, markerZoomAnimation: false });
+  // Zoom zo kiezen dat 1 CSS-pixel (1/96 inch op papier) overeenkomt met de gekozen schaal
+  const zoom = Math.log2(156543.03392 * Math.cos(c[0] * Math.PI / 180) / (u.schaal * 0.0254 / 96));
+  printkaart.setView(c, zoom, { animate: false });
+  const tegels = L.tileLayer(TEGELS[u.onder][0], { maxZoom: 24, maxNativeZoom: TEGELS[u.onder][2] }).addTo(printkaart);
+  const knop = $('v-print'); knop.disabled = true; knop.textContent = 'Kaart laden…';
+  const klaar = () => { knop.disabled = false; knop.textContent = 'Afdrukken / PDF'; };
+  tegels.once('load', klaar); setTimeout(klaar, 15000);
+
+  const grens = printkaart.getBounds();
+  if (bestaand?.toon) tekenBestaand(printkaart, L.layerGroup(), grens);
+  const opTekening = ontwerp.bomen.filter(b => grens.contains([b.lat, b.lng]));
+  if (ontwerp.toonKroon) ontwerp.bomen.forEach(b => { const k = kroonVan(b); if (k.d) kroonLagen(b, k.d, 0.8).forEach(p => p.addTo(printkaart)); });
+  ontwerp.bomen.flatMap(b => b.vakken.map(v => ({ b, v }))).sort((x, y) => voorrangVan(y.v) - voorrangVan(x.v)).forEach(({ b, v }) => L.polygon(v.pts.map(pt => naarLL(b, pt)), { color: '#111', weight: 1.1, fillColor: MATERIAAL[v.mat].kleur, fillOpacity: 0.85, interactive: false }).addTo(printkaart));
+  ontwerp.bomen.forEach((b, i) => L.marker([b.lat, b.lng], { interactive: false, icon: boomIcoon(b, i + 1, '', printkaart.getZoom()) }).addTo(printkaart));
+
+  // Hoeveelheden: alleen bomen binnen het kaartbeeld
+  const netto = {}; Object.keys(MATERIAAL).forEach(k => netto[k] = 0);
+  const rijen = opTekening.map(b => { const r = beoordeel(b), per = {}; Object.keys(MATERIAAL).forEach(k => per[k] = 0);
+    b.vakken.forEach((v, j) => { per[v.mat] += r.perVak[j].m3; netto[v.mat] += r.perVak[j].m3; }); return { b, per }; });
+  const bestel = v => Math.ceil(v * (1 + u.toeslag / 100) * 2) / 2;
+  const totaalNetto = Object.values(netto).reduce((t, v) => t + v, 0);
+  const matRijen = Object.keys(MATERIAAL).filter(k => netto[k] > 0);
+  const kort = { bomengrond: 'Grond', bomenzand: 'Zand', bomengranulaat: 'Gran.' };
+  const datum = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  $('zij').innerHTML = `
+    <div><h3>${esc(ontwerp.naam || 'Ontwerp bomen')}</h3><div>Boomstandplaatsen en groeiplaatsinrichting</div></div>
+    <div><h4>Legenda</h4>
+      <div class="legrij"><span class="boomteken vast">${boomSvg(3, false)}<b>1</b></span> Boom met nummer (zie lijst); + = stamplek</div>
+      ${ontwerp.toonKroon ? `<div class="legrij">${kroonIcoon(18)} Kroonprojectie volwassen boom</div>` : ''}
+      ${bestaand?.toon ? `<div class="legrij"><svg width="5mm" height="5mm" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="none" stroke="#5b6455" stroke-width="0.5" stroke-dasharray="1.5 1"/><circle cx="5" cy="5" r="1.4" fill="#4d554a" stroke="#fff" stroke-width="0.4"/></svg> Bestaande boom (bomenbestand)</div>` : ''}
+      ${Object.entries(MATERIAAL).map(([k, mt]) => `<div class="legrij"><span class="sw" style="background:${mt.kleur}"></span>Groeiplaats ${mt.naam.toLowerCase()}</div>`).join('')}
+    </div>
+    <div class="bomen">
+      <h4>Te bestellen hoeveelheden</h4>
+      ${matRijen.length ? `<table><tr><th>Materiaal</th><th class="g">Netto m³</th><th class="g">Bestellen m³</th></tr>
+        ${matRijen.map(k => `<tr><td><span class="sw" style="background:${MATERIAAL[k].kleur}"></span>${MATERIAAL[k].naam}</td><td class="g">${getal(netto[k])}</td><td class="g">${getal(bestel(netto[k]))}</td></tr>`).join('')}
+        <tr class="totaalrij"><td>Totaal</td><td class="g">${getal(totaalNetto)}</td><td class="g">${getal(matRijen.reduce((t, k) => t + bestel(netto[k]), 0))}</td></tr></table>
+        <p class="noot">Bestellen = netto${u.toeslag ? ` + ${getal(u.toeslag)}% toeslag` : ''}, naar boven afgerond op 0,5 m³. Alleen bomen binnen het kaartbeeld: ${opTekening.length} van ${ontwerp.bomen.length}.</p>`
+        : '<p class="noot">Geen bomen binnen het kaartbeeld.</p>'}
+      ${rijen.length ? `<p class="noot"><b>Kroonprojectie volwassen bomen: ${getal(opTekening.reduce((t, b) => t + kroonM2(b), 0), 0)} m²</b> (som per boom, overlap niet afgetrokken${(z => z ? `; ${z} ${z === 1 ? 'boom' : 'bomen'} zonder kroonmaat` : '')(opTekening.filter(b => !kroonVan(b).d).length)}).</p>` : ''}
+      ${rijen.length ? `<h4 style="margin-top:3mm">Bijdrage boomkroonbedekking (NHV)</h4><table>${nhvTabel(opTekening).html.replace(/<small class="hint">/g, '<small>')}</table><p class="noot">Overlap één keer geteld; plantjaar ${ontwerp.plantjaar}; bij aanplant 0 m².</p>` : ''}
+      ${rijen.length ? `<h4 style="margin-top:3mm">Bomen</h4><table><tr><th>Nr</th><th>Soort</th><th>Standplaats</th><th class="g">Kroon Ø</th>${matRijen.map(k => `<th class="g">${kort[k]}</th>`).join('')}</tr>
+        ${rijen.map(({ b, per }) => { const s = soortVan(b.soort), k = kroonVan(b); return `<tr><td>${ontwerp.bomen.indexOf(b) + 1}</td><td>${s ? `<i>${esc(s.wet)}</i>` : '–'}</td><td>${esc(b.standplaats)}</td><td class="g">${k.d ? getal(k.d) : '–'}</td>${matRijen.map(k => `<td class="g">${per[k] ? getal(per[k]) : ''}</td>`).join('')}</tr>`; }).join('')}
+        </table><p class="noot">Kroon Ø in m (volwassen boom), hoeveelheden in m³ per boom.</p>` : ''}
+    </div>
+    <div class="titelblok">
+      <div class="kop"><img src="logo.png" alt="J.L. Post Groenadvies"></div>
+      <div><small>Project</small>${esc(ontwerp.naam || '–')}</div><div><small>Datum</small>${datum}</div>
+      <div><small>Schaal</small>1:${u.schaal} (${u.formaat})</div><div><small>Formaat</small>${u.formaat} ${u.richting}</div>
+      <div><small>Status</small><span class="concept">CONCEPT</span></div><div><small>Getekend</small>J.L. Post Groenadvies</div>
+      <div class="breed"><small>Ondergrond</small>${TEGELS[u.onder][1]}</div>
+      <div class="breed"><small>Let op</small>Indicatief ontwerp. Maatvoering en hoeveelheden controleren voor uitvoering.</div>
+    </div>`;
+}
+$('b-uitdraai').addEventListener('click', maakUitdraai);
+$('v-terug').addEventListener('click', sluitVoorbeeld);
+$('v-print').addEventListener('click', () => window.print());
+window.addEventListener('resize', () => { if (!$('voorbeeld').hidden) pasVoorbeeldAan(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('voorbeeld').hidden) sluitVoorbeeld(); });
+
+// Inlezen van een bomenbestand. Herkent GeoJSON-punten en CSV met X/Y-kolommen of een WKT-kolom (POINT(x y)).
+const SOORTVELD = /^(boomsoort|soort|soortnaam|latijnse_?naam|wetenschappelijke_?naam|species|naam_?lat(ijn)?|boomsoort_?lat(ijn)?|boomtype)$/i;
+const KROONVELD = /^(kroon_?diameter|kroondiameter|kroon_?breedte|kroonbreedte|kroon_?m|kroon|diameter_?kroon|crown_?diameter)$/i;
+function naarPunt(x, y) { // RD of graden herkennen, terug als [lat, lng] binnen Nederland, anders null
+  if (!isFinite(x) || !isFinite(y)) return null;
+  let p = x > 1000 && y > 1000 ? vanRD(x, y) : (y > x ? [y, x] : [x, y]);
+  return p[0] > 50.6 && p[0] < 53.8 && p[1] > 3.2 && p[1] < 7.3 ? p : null;
+}
+function veld(obj, patroon) { const k = Object.keys(obj).find(k => patroon.test(k.trim()) && obj[k] !== '' && obj[k] != null); return k ? obj[k] : ''; }
+const getalNL = v => parseFloat(String(v).replace(',', '.'));
+function leesBomenbestand(tekst) {
+  const punten = []; let overgeslagen = 0;
+  const voegToe = (p, props) => { if (!p) { overgeslagen++; return; } const kr = getalNL(veld(props, KROONVELD)); punten.push([+p[0].toFixed(7), +p[1].toFixed(7), String(veld(props, SOORTVELD)).slice(0, 60), kr > 0 && kr < 40 ? kr : null]); };
+  const json = (() => { try { return JSON.parse(tekst); } catch (e) { return null; } })();
+  if (json) {
+    for (const ft of json.features || []) {
+      const g = ft.geometry; if (!g) { overgeslagen++; continue; }
+      const lijst = g.type === 'Point' ? [g.coordinates] : g.type === 'MultiPoint' ? g.coordinates : null;
+      if (!lijst) { overgeslagen++; continue; }
+      lijst.forEach(c => voegToe(naarPunt(c[0], c[1]), ft.properties || {}));
+    }
+    return { punten, overgeslagen };
+  }
+  const regels = tekst.replace(/^\ufeff/, '').split(/\r?\n/).filter(l => l.trim());
+  const scheiding = [';', '\t', ','].find(s => regels[0].includes(s)) || ';';
+  const splits = l => { const uit = []; let cel = '', aanhaling = false; for (const ch of l) { if (ch === '"') aanhaling = !aanhaling; else if (ch === scheiding && !aanhaling) { uit.push(cel); cel = ''; } else cel += ch; } uit.push(cel); return uit.map(c => c.trim()); };
+  const kop = splits(regels[0]);
+  const zoek = re => kop.findIndex(k => re.test(k));
+  const ix = zoek(/^(x|x_?rd|rd_?x|xcoord|x_?coord(inaat)?|lon|lng|longitude|lengtegraad)$/i), iy = zoek(/^(y|y_?rd|rd_?y|ycoord|y_?coord(inaat)?|lat|latitude|breedtegraad)$/i);
+  const iw = zoek(/^(wkt|geometrie|geometry|geom|the_geom)$/i);
+  for (const l of regels.slice(1)) {
+    const c = splits(l), props = Object.fromEntries(kop.map((k, i) => [k, c[i]]));
+    if (ix >= 0 && iy >= 0) voegToe(naarPunt(getalNL(c[ix]), getalNL(c[iy])), props);
+    else if (iw >= 0) { const m = /POINT\s*\(\s*([\d.,-]+)\s+([\d.,-]+)/i.exec(c[iw] || ''); voegToe(m ? naarPunt(getalNL(m[1]), getalNL(m[2])) : null, props); }
+    else overgeslagen++;
+  }
+  if (ix < 0 && iw < 0) throw new Error('Geen kolommen met coördinaten gevonden (bijv. X en Y, of een WKT-kolom).');
+  return { punten, overgeslagen };
+}
+const doek = L.canvas({ padding: 0.5 });
+const bestaandLaag = L.layerGroup();
+function tekenBestaand(doel = kaart, laagGroep = bestaandLaag, grens = null) {
+  laagGroep.clearLayers();
+  if (!bestaand || !bestaand.toon) { laagGroep.remove(); return; }
+  for (const [lat, lng, soort, kr] of bestaand.punten) {
+    if (grens && !grens.contains([lat, lng])) continue;
+    if (kr) L.circle([lat, lng], { renderer: doek, radius: kr / 2, color: '#5b6455', weight: 1, dashArray: '4 3', fill: false, interactive: false }).addTo(laagGroep);
+    const m = L.circleMarker([lat, lng], { renderer: doek, radius: 3.5, color: '#fff', weight: 1, fillColor: '#4d554a', fillOpacity: 0.9 });
+    if (doel === kaart) m.bindTooltip((soort || 'Bestaande boom') + (kr ? ` · kroon Ø ${getal(kr)} m` : ''));
+    m.addTo(laagGroep);
+  }
+  laagGroep.addTo(doel);
+}
+function toonBestaandInfo() {
+  const er = !!bestaand;
+  $('b-bestaand-wis').hidden = !er; $('l-bestaand').hidden = !er;
+  $('o-bestaand').checked = !!bestaand?.toon;
+  $('bestaand-info').textContent = er ? `${bestaand.punten.length.toLocaleString('nl-NL')} bestaande bomen uit ${bestaand.naam}.` : '';
+}
+$('b-bestaand').addEventListener('click', () => $('f-bestaand').click());
+$('f-bestaand').addEventListener('change', async e => {
+  const bestand = e.target.files[0]; if (!bestand) return;
+  try {
+    const { punten, overgeslagen } = leesBomenbestand(await bestand.text());
+    if (!punten.length) throw new Error('Er zijn geen bomen binnen Nederland gevonden in dit bestand.');
+    bestaand = { naam: bestand.name, punten, toon: true };
+    const bewaard = bewaarBestaand();
+    tekenBestaand(); toonBestaandInfo();
+    kaart.fitBounds(L.latLngBounds(punten.map(p => [p[0], p[1]])).pad(0.05));
+    melding(`${punten.length.toLocaleString('nl-NL')} bestaande bomen ingeladen${overgeslagen ? `, ${overgeslagen} regels overgeslagen (geen of onbekende coördinaten)` : ''}.${bewaard ? '' : ' Het bestand is te groot om in de browser te bewaren; laad het na het herstarten opnieuw in.'}`);
+  } catch (err) { melding('Bomenbestand niet ingelezen: ' + err.message); }
+  e.target.value = '';
+});
+$('o-bestaand').addEventListener('change', e => { if (bestaand) { bestaand.toon = e.target.checked; bewaarBestaand(); tekenBestaand(); } });
+$('b-bestaand-wis').addEventListener('click', () => { bestaand = null; bewaarBestaand(); tekenBestaand(); toonBestaandInfo(); melding('Bestaande bomen verwijderd uit de kaart.'); });
+$('o-plantjaar').addEventListener('change', e => { const j = parseInt(e.target.value, 10); if (j >= 2020 && j <= 2060) { ontwerp.plantjaar = j; verversAlles(); } });
+
+function verversUI() {
+  $('o-naam').value = ontwerp.naam || ''; $('o-kroon').checked = ontwerp.toonKroon;
+  toonRekenbasis(); toonUitdraaiInstellingen(); tekenKader(); verversAlles();
+}
+function ongedaan() {
+  if (!geschiedenis.length) return;
+  const vorige = geschiedenis.pop();
+  ontwerp = { ...JSON.parse(vorige), kaart: ontwerp.kaart }; laatsteStaat = vorige;
+  normaliseerOntwerp();
+  if (!huidig()) actief = actiefVak = null; else if (!huidigVak()) actiefVak = huidig().vakken[0]?.id || null;
+  verversUI(); melding('Laatste wijziging ongedaan gemaakt.');
+}
+$('b-undo').addEventListener('click', ongedaan);
+function verwijderBoom() { if (!actief) return; const nr = ontwerp.bomen.indexOf(huidig()) + 1; ontwerp.bomen = ontwerp.bomen.filter(b => b.id !== actief); actief = actiefVak = null; verversAlles(); melding(`Boom ${nr} verwijderd. Met Ongedaan maken zet je hem terug.`); }
+const typtIn = el => el && (el.isContentEditable || /^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName));
+document.addEventListener('keydown', e => {
+  if (!$('voorbeeld').hidden) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !typtIn(e.target)) { e.preventDefault(); ongedaan(); }
+  else if ((e.key === 'Delete' || e.key === 'Backspace') && actief && !typtIn(e.target)) { e.preventDefault(); verwijderBoom(); }
+});
+$('b-zoom').addEventListener('click', () => { if (ontwerp.bomen.length) kaart.fitBounds(L.latLngBounds(ontwerp.bomen.map(b => [b.lat, b.lng])).pad(0.25), { maxZoom: 20 }); });
+
+normaliseerOntwerp();
+verversUI();
+tekenBestaand(); toonBestaandInfo();
+laatsteStaat = staat(); $('b-undo').disabled = true;
+</script>
+</body>
+</html>

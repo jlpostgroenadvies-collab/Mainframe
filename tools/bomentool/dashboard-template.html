@@ -1,0 +1,450 @@
+<title>Boomselectietool NHV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: filterkolom links (sticky), tegelraster rechts; op telefoon onder elkaar. Bewust één lichte stijl. */
+:root {
+  color-scheme: light;
+  --bg: #fbfcf9;
+  --surface: #ffffff;
+  --fg: #1e2a19;
+  --muted: #66735f;
+  --line: #e3eadc;
+  --accent: #2f6f12;
+  --accent-2: #6aa83f;
+  --accent-soft: #eff6e8;
+  --foto: #eef3e8;
+  --ja-fg: #2b6a1f; --ja-bg: #e1f1d6;
+  --bep-fg: #835a06; --bep-bg: #fbefcf;
+  --nee-fg: #a13d31; --nee-bg: #f9e3df;
+  --warn-bg: #fffaeb; --warn-line: #efdca4;
+  --schaduw: 0 1px 2px rgba(40, 60, 30, .06), 0 4px 14px rgba(40, 60, 30, .06);
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1320px; margin: 0 auto; padding: 28px 20px 64px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.1; color: var(--accent); }
+h2 { font-size: 1.35rem; }
+.eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 600; color: var(--muted); }
+.kop { display: grid; gap: 8px; margin-bottom: 18px; }
+.kop p { margin: 0; max-width: 68ch; color: var(--muted); }
+.concept { display: flex; gap: 10px; align-items: flex-start; background: var(--warn-bg); border: 1px solid var(--warn-line); border-radius: 8px; padding: 10px 14px; font-size: 0.88rem; margin-bottom: 22px; max-width: 90ch; }
+.concept b { white-space: nowrap; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+/* Standplaatskaarten */
+.plekken { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 24px; }
+.plek { display: grid; grid-template-columns: 64px 1fr; gap: 4px 14px; align-items: center; text-align: left; font: inherit; color: inherit;
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: border-color .15s, background .15s; }
+.plek:hover { border-color: var(--accent-2); }
+.plek[aria-pressed="true"] { border-color: var(--accent-2); background: var(--accent-soft); }
+.plek svg { grid-row: span 2; width: 64px; height: 44px; }
+.plek .naam { font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+.plek .vink { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--muted); display: inline-grid; place-items: center; font-size: 12px; line-height: 1; color: transparent; }
+.plek[aria-pressed="true"] .vink { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.plek .tel { font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.plek .tel b { color: var(--ja-fg); }
+
+.main { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 28px; align-items: start; }
+aside { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: grid; gap: 20px; }
+fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; min-width: 0; }
+legend { padding: 0; margin-bottom: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: inherit; font-size: 0.85rem; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent-2); color: var(--accent); font-weight: 600; }
+.chip small { opacity: .75; }
+label.check { display: flex; gap: 8px; align-items: flex-start; font-size: 0.9rem; cursor: pointer; }
+label.check input { margin-top: 3px; accent-color: var(--accent); }
+input[type="search"], select { font: inherit; width: 100%; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+.reset { font: inherit; font-size: 0.85rem; background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; justify-self: start; }
+.legenda { display: grid; gap: 6px; font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+.legenda div { display: flex; gap: 8px; align-items: center; }
+
+/* Tegels */
+.resbalk { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
+.resbalk .aantal { font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.resbalk .uitleg { font-size: 0.88rem; color: var(--muted); }
+.tegels { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; }
+.tegel { display: grid; grid-template-rows: auto 1fr; text-align: left; font: inherit; color: inherit; padding: 0; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; box-shadow: var(--schaduw); transition: transform .15s, border-color .15s; }
+.tegel:hover { transform: translateY(-2px); border-color: var(--accent-2); }
+.foto { position: relative; aspect-ratio: 4 / 3; max-width: 100%; background: var(--foto); display: grid; place-items: center; overflow: hidden; }
+.foto img { width: 100%; height: 100%; object-fit: cover; }
+.foto svg { width: 46%; height: auto; opacity: .55; }
+.foto .badge { position: absolute; top: 8px; left: 8px; background: var(--surface); color: var(--fg); font-size: 0.72rem; font-weight: 700; border-radius: 999px; padding: 2px 9px; }
+.foto .volgt { position: absolute; bottom: 7px; right: 10px; font-size: 0.7rem; color: var(--muted); }
+.tekst { display: grid; gap: 8px; padding: 11px 13px 13px; align-content: start; }
+.wet { font-family: var(--font-display); font-style: italic; font-size: 1.08rem; line-height: 1.22; }
+.wet .cv { font-style: normal; }
+.nl { font-size: 0.85rem; color: var(--muted); margin-top: 1px; }
+.pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.pill { font-size: 0.7rem; font-weight: 600; border-radius: 5px; padding: 2px 7px; white-space: nowrap; }
+.pill.ja { background: var(--ja-bg); color: var(--ja-fg); }
+.pill.beperkt { background: var(--bep-bg); color: var(--bep-fg); }
+.pill.nee { background: var(--nee-bg); color: var(--nee-fg); }
+.pill.dim { opacity: .4; }
+.leeg { grid-column: 1 / -1; padding: 28px 16px; text-align: center; color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; }
+
+/* Detailvenster */
+dialog { border: 0; padding: 0; border-radius: 14px; width: min(760px, calc(100vw - 32px)); max-height: calc(100vh - 48px); background: var(--surface); color: var(--fg); box-shadow: 0 20px 60px rgba(30, 45, 20, .25); }
+dialog::backdrop { background: rgba(30, 45, 20, .35); }
+.detail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); }
+.detail .foto { aspect-ratio: auto; min-height: 100%; }
+.detail .inhoud { padding: 22px 24px 24px; display: grid; gap: 16px; align-content: start; }
+.detail .wet { font-size: 1.6rem; }
+.detail .nl { font-size: 1rem; }
+.sluit { position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font-size: 18px; line-height: 1; cursor: pointer; z-index: 1; }
+.feiten { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; font-size: 0.92rem; }
+.feiten dt { color: var(--muted); }
+.feiten dd { margin: 0; }
+.geschikt { display: grid; gap: 6px; }
+.geschikt div { display: grid; grid-template-columns: 92px auto; gap: 10px; align-items: center; font-size: 0.92rem; }
+.blok h3 { font-family: var(--font-body); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+.blok p { margin: 0; }
+.status { font-size: 0.82rem; color: var(--bep-fg); background: var(--warn-bg); border-radius: 6px; padding: 6px 10px; }
+
+.gp-instel label { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+input[type="number"] { font: inherit; width: 100%; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
+.m3 { font-size: 0.8rem; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; gap: 6px; align-items: baseline; }
+.m3 b { font-size: 0.95rem; color: var(--fg); }
+.m3.leeg-m3 { font-style: italic; }
+.gp-tabel { margin-top: 40px; display: grid; gap: 4px; }
+.tabelscroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.gp-tabel table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+.gp-tabel th, .gp-tabel td { padding: 9px 14px; text-align: right; border-top: 1px solid var(--line); white-space: nowrap; }
+.gp-tabel tr:first-child th { border-top: 0; background: var(--accent-soft); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.gp-tabel th:first-child, .gp-tabel td:first-child { text-align: left; }
+.gp-tabel td.open { color: var(--muted); }
+.gp-tabel td.actief { background: var(--accent-soft); font-weight: 700; }
+.gp-noot { margin: 6px 0 0; font-size: 0.82rem; color: var(--muted); max-width: 80ch; }
+.gp-detail { display: grid; gap: 4px; }
+.gp-detail .getal { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.gp-detail .klein { font-size: 0.84rem; color: var(--muted); }
+.uitgesloten { margin-top: 40px; display: grid; gap: 12px; }
+.uitgesloten ul { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.uitgesloten li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 14px; padding: 10px 16px; border-top: 1px solid var(--line); }
+.uitgesloten li:first-child { border-top: 0; }
+.uitgesloten .noot { font-size: 0.9rem; }
+.maker { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--muted); opacity: .85; }
+.maker img { width: 16px; height: 16px; border-radius: 3px; }
+.maker { margin-top: 6px; }
+footer { margin-top: 40px; font-size: 0.82rem; color: var(--muted); display: grid; gap: 4px; }
+
+@media (max-width: 760px) {
+  .wrap { padding-inline: 16px; }
+  .plekken { grid-template-columns: minmax(0, 1fr); }
+  .main { grid-template-columns: minmax(0, 1fr); }
+  aside { position: static; }
+  .tegels { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .detail { grid-template-columns: minmax(0, 1fr); }
+  .detail .foto { aspect-ratio: 16 / 9; min-height: 0; }
+  .uitgesloten li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <!--NAV-->
+  <header class="kop">
+    <span class="eyebrow">J.L. Post Groenadvies · Vergroeningsscan NHV</span>
+    <h1>Boomselectietool</h1>
+    <p>Bomen voor bebouwd gebied in de openbare ruimte. Kies de standplaats en verfijn op grootte en herkomst. Klik op een boom voor alle informatie.</p>
+  </header>
+
+  <div class="concept" role="note"><b>Concept.</b> <span>De beoordelingen zijn een eerste voorstel en nog niet getoetst of per waarde aan een bron gekoppeld. Niet gebruiken als definitief advies.</span></div>
+
+  <section class="plekken" aria-label="Standplaats">
+    <button class="plek" type="button" id="plek-gazon" data-plek="gazon" aria-pressed="false">
+      <svg viewBox="0 0 64 44" aria-hidden="true"><rect x="0" y="34" width="64" height="10" fill="var(--accent-soft)"/><path d="M0 34h64" stroke="var(--accent-2)" stroke-width="2"/><path d="M6 34l2-4M12 34l1-4M20 34l2-4M42 34l1-4M50 34l2-4M58 34l1-4" stroke="var(--accent-2)" stroke-width="1.4" fill="none"/><rect x="30.5" y="18" width="3" height="16" fill="var(--muted)"/><circle cx="32" cy="14" r="11" fill="var(--accent-2)"/></svg>
+      <span class="naam"><span class="vink">✓</span>Gazon</span>
+      <span class="tel" data-tel="gazon"></span>
+    </button>
+    <button class="plek" type="button" id="plek-plantvak" data-plek="plantvak" aria-pressed="false">
+      <svg viewBox="0 0 64 44" aria-hidden="true"><rect x="0" y="34" width="64" height="10" fill="var(--accent-soft)"/><path d="M0 34h64" stroke="var(--muted)" stroke-width="2"/><circle cx="12" cy="31" r="6" fill="var(--accent)"/><circle cx="22" cy="32" r="5" fill="var(--accent-2)"/><circle cx="44" cy="32" r="5" fill="var(--accent-2)"/><circle cx="54" cy="31" r="6" fill="var(--accent)"/><rect x="30.5" y="18" width="3" height="16" fill="var(--muted)"/><circle cx="32" cy="14" r="11" fill="var(--accent-2)"/></svg>
+      <span class="naam"><span class="vink">✓</span>Plantvak</span>
+      <span class="tel" data-tel="plantvak"></span>
+    </button>
+    <button class="plek" type="button" id="plek-verharding" data-plek="verharding" aria-pressed="false">
+      <svg viewBox="0 0 64 44" aria-hidden="true"><g fill="var(--line)" stroke="var(--muted)" stroke-width="1"><rect x="1" y="34" width="10" height="6"/><rect x="12" y="34" width="10" height="6"/><rect x="42" y="34" width="10" height="6"/><rect x="53" y="34" width="10" height="6"/></g><rect x="23" y="34" width="18" height="6" fill="var(--accent-soft)" stroke="var(--muted)" stroke-width="1"/><rect x="30.5" y="18" width="3" height="16" fill="var(--muted)"/><circle cx="32" cy="14" r="11" fill="var(--accent-2)"/></svg>
+      <span class="naam"><span class="vink">✓</span>Verharding</span>
+      <span class="tel" data-tel="verharding"></span>
+    </button>
+  </section>
+
+  <div class="main">
+    <aside aria-label="Filters">
+      <fieldset>
+        <legend class="eyebrow">Geschiktheid</legend>
+        <label class="check"><input type="checkbox" id="f-beperkt"> <span>Ook "beperkt geschikt" tonen (alleen onder voorwaarden)</span></label>
+      </fieldset>
+      <fieldset>
+        <legend class="eyebrow">Grootte</legend>
+        <div class="chips" id="f-grootte">
+          <button class="chip" type="button" data-g="1e" aria-pressed="false">1e <small>&gt; 15 m</small></button>
+          <button class="chip" type="button" data-g="2e" aria-pressed="false">2e <small>10–15 m</small></button>
+          <button class="chip" type="button" data-g="3e" aria-pressed="false">3e <small>&lt; 10 m</small></button>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend class="eyebrow"><label for="f-herkomst">Herkomst</label></legend>
+        <select id="f-herkomst">
+          <option value="alle">Alle soorten</option>
+          <option value="inheems">Inheems (incl. cultivars)</option>
+          <option value="inheems-ing">Inheems of ingeburgerd</option>
+          <option value="uitheems">Niet inheems</option>
+        </select>
+      </fieldset>
+      <fieldset>
+        <legend class="eyebrow"><label for="f-zoek">Zoeken</label></legend>
+        <input type="search" id="f-zoek" placeholder="Naam of kenmerk, bijv. zuil" autocomplete="off">
+      </fieldset>
+      <fieldset>
+        <legend class="eyebrow"><label for="f-sort">Sorteren</label></legend>
+        <select id="f-sort">
+          <option value="wet">Wetenschappelijke naam</option>
+          <option value="nl">Nederlandse naam</option>
+          <option value="grootte">Grootte (klein naar groot)</option>
+        </select>
+      </fieldset>
+      <fieldset class="gp-instel">
+        <legend class="eyebrow">Groeiplaats</legend>
+        <label for="g-profiel">Profieltype</label>
+        <select id="g-profiel">
+          <option value="grondwater">Grondwater (contact met grondwater)</option>
+          <option value="hangwater">Hangwater (geen contact)</option>
+        </select>
+        <label for="g-niveau">Ambitieniveau</label>
+        <select id="g-niveau">
+          <option value="optimaal">Optimaal</option>
+          <option value="redelijk">Redelijk</option>
+          <option value="marginaal">Marginaal (minimum)</option>
+        </select>
+        <label for="g-stap">Omloop</label>
+        <select id="g-stap"></select>
+        <label for="g-diepte">Doorwortelbare diepte (m)</label>
+        <input type="number" id="g-diepte" min="0.3" max="3" step="0.1" inputmode="decimal">
+      </fieldset>
+      <button class="reset" type="button" id="f-reset">Alle filters wissen</button>
+      <div class="legenda">
+        <div><span class="pill ja">ja</span> geschikt</div>
+        <div><span class="pill beperkt">beperkt</span> onder voorwaarden</div>
+        <div><span class="pill nee">nee</span> niet geschikt</div>
+      </div>
+    </aside>
+
+    <section aria-live="polite">
+      <div class="resbalk">
+        <span class="aantal" id="aantal"></span>
+        <span class="uitleg" id="uitleg"></span>
+      </div>
+      <div class="tegels" id="tegels"></div>
+
+      <section class="gp-tabel" aria-labelledby="gp-kop">
+        <div class="resbalk">
+          <h2 id="gp-kop">Benodigde doorwortelbare ruimte</h2>
+          <span class="uitleg" id="gp-uitleg"></span>
+        </div>
+        <div class="tabelscroll"><table id="gp-tabel"></table></div>
+        <p class="gp-noot" id="gp-noot"></p>
+      </section>
+
+      <section class="uitgesloten" aria-labelledby="uitg-kop">
+        <h2 id="uitg-kop">Niet aanbevolen</h2>
+        <ul id="uitgesloten"></ul>
+      </section>
+    </section>
+  </div>
+
+  <footer>
+    <span>Bijgewerkt <span id="datum"></span> · bron: bomenlijst boomselectietool NHV (concept)</span>
+    <span>Bomen in verharding altijd met een goede groeiplaatsinrichting, zoals bomengranulaat of bomenzand onder de verharding.</span>
+    <span class="maker"><img src="beeldmerk.png" alt="">Ontwikkeld door J.L. Post Groenadvies</span>
+  </footer>
+</div>
+
+<dialog id="detail" aria-labelledby="d-wet">
+  <button class="sluit" type="button" id="d-sluit" aria-label="Sluiten">×</button>
+  <div class="detail" id="d-inhoud"></div>
+</dialog>
+
+<script>
+const DATA = /*DATA*/null;
+const PLEKKEN = ['gazon', 'plantvak', 'verharding'];
+const LABEL = { gazon: 'Gazon', plantvak: 'Plantvak', verharding: 'Verharding' };
+const UITLEG = { ja: 'geschikt', beperkt: 'beperkt, onder voorwaarden', nee: 'niet geschikt' };
+const GROOTTE = { '1e': '1e grootte (> 15 m)', '2e': '2e grootte (10–15 m)', '3e': '3e grootte (< 10 m)' };
+const STANDAARD = { plekken: new Set(), beperkt: false, grootte: new Set(), herkomst: 'alle', zoek: '', sort: 'wet', profiel: 'grondwater', niveau: 'redelijk', stap: 1, diepte: 1 };
+const state = { ...STANDAARD, plekken: new Set(), grootte: new Set() };
+
+// Omlooptijden per groeiwijze uit het tabblad Groeiplaats (bijv. regulier 20/40/60/80, pionier 15/25/35/45)
+const OMLOOP = {};
+DATA.groeiplaats.forEach(r => { (OMLOOP[r.groeiwijze] ||= new Set()).add(r.omloop); });
+Object.keys(OMLOOP).forEach(k => OMLOOP[k] = [...OMLOOP[k]].sort((a, b) => a - b));
+const STAPPEN = Math.max(0, ...Object.values(OMLOOP).map(o => o.length));
+const groeiwijze = b => b.groeiwijze || 'regulier';
+function groeiplaats(b) {
+  if (b.m3 != null) return { m3: b.m3, bron: b.bron, perSoort: true };
+  const w = groeiwijze(b), omloop = (OMLOOP[w] || [])[state.stap];
+  const r = DATA.groeiplaats.find(r => r.grootte === b.grootte && r.groeiwijze === w && r.profiel === state.profiel && r.niveau === state.niveau && r.omloop === omloop);
+  return { omloop, m3: r ? r.m3 : null, bron: r ? r.bron : '', w };
+}
+const getal = n => n.toLocaleString('nl-NL', { maximumFractionDigits: 1 });
+
+try { Object.assign(state, (s => s ? { ...s, plekken: new Set(s.plekken), grootte: new Set(s.grootte) } : {})(JSON.parse(localStorage.getItem('bst-filters')))); } catch (e) {}
+function bewaar() { try { localStorage.setItem('bst-filters', JSON.stringify({ ...state, plekken: [...state.plekken], grootte: [...state.grootte] })); } catch (e) {} }
+
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+// Cultivarnamen tussen enkele aanhalingstekens niet cursief
+const wetHtml = s => esc(s).replace(/('[^']+')/g, '<span class="cv">$1</span>').replace(/ (f\.|×) /g, ' <span class="cv">$1</span> ');
+
+// Silhouet als plaatshouder tot er een foto is; breedte volgt de grootteklasse
+function silhouet(b) {
+  const zuil = /zuil|smal/i.test(b.noot);
+  const r = { '1e': 30, '2e': 25, '3e': 20 }[b.grootte] || 25;
+  const kroon = zuil ? `<ellipse cx="50" cy="40" rx="${r * 0.5}" ry="${r + 8}" fill="var(--accent-2)"/>` : `<circle cx="50" cy="${44 - (30 - r) * 0.4}" r="${r}" fill="var(--accent-2)"/>`;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="47" y="60" width="6" height="32" rx="2" fill="var(--muted)"/>${kroon}<rect x="16" y="92" width="68" height="3" rx="1.5" fill="var(--muted)"/></svg>`;
+}
+function fotoHtml(b) {
+  return b.foto ? `<img src="${esc(b.foto)}" alt="${esc(b.nl)} (${esc(b.wet)})" loading="lazy">` : `${silhouet(b)}<span class="volgt">foto volgt</span>`;
+}
+
+function past(b, plek) { return b[plek] === 'ja' || (state.beperkt && b[plek] === 'beperkt'); }
+function herkomstOk(b) {
+  const h = b.inheems.toLowerCase();
+  if (state.herkomst === 'inheems') return h.startsWith('ja');
+  if (state.herkomst === 'inheems-ing') return h.startsWith('ja') || h.startsWith('ingeburgerd');
+  if (state.herkomst === 'uitheems') return h.startsWith('nee');
+  return true;
+}
+function filter(zonderPlek) {
+  const q = state.zoek.trim().toLowerCase();
+  return DATA.bomen.filter(b =>
+    (zonderPlek || [...state.plekken].every(p => past(b, p))) &&
+    (!state.grootte.size || state.grootte.has(b.grootte)) &&
+    herkomstOk(b) &&
+    (!q || (b.wet + ' ' + b.nl + ' ' + b.noot).toLowerCase().includes(q)));
+}
+
+let zichtbaar = [];
+function render() {
+  document.querySelectorAll('.plek').forEach(el => el.setAttribute('aria-pressed', state.plekken.has(el.dataset.plek)));
+  document.querySelectorAll('#f-grootte .chip').forEach(el => el.setAttribute('aria-pressed', state.grootte.has(el.dataset.g)));
+  document.getElementById('f-beperkt').checked = state.beperkt;
+  document.getElementById('f-herkomst').value = state.herkomst;
+  document.getElementById('f-sort').value = state.sort;
+  if (document.getElementById('f-zoek').value !== state.zoek) document.getElementById('f-zoek').value = state.zoek;
+  document.getElementById('g-profiel').value = state.profiel;
+  document.getElementById('g-niveau').value = state.niveau;
+  document.getElementById('g-stap').value = state.stap;
+  if (+document.getElementById('g-diepte').value !== state.diepte) document.getElementById('g-diepte').value = state.diepte;
+  renderTabel();
+
+  const basis = filter(true);
+  PLEKKEN.forEach(p => {
+    const ja = basis.filter(b => b[p] === 'ja').length, bep = basis.filter(b => b[p] === 'beperkt').length;
+    document.querySelector(`[data-tel="${p}"]`).innerHTML = `<b>${ja}</b> geschikt · ${bep} beperkt`;
+  });
+
+  zichtbaar = filter(false).sort((a, b) =>
+    state.sort === 'nl' ? a.nl.localeCompare(b.nl, 'nl') || a.wet.localeCompare(b.wet) :
+    state.sort === 'grootte' ? b.grootte.localeCompare(a.grootte) || a.wet.localeCompare(b.wet) :
+    a.wet.localeCompare(b.wet));
+
+  document.getElementById('aantal').textContent = `${zichtbaar.length} van ${DATA.bomen.length} soorten`;
+  const gekozen = [...state.plekken].map(p => LABEL[p].toLowerCase());
+  document.getElementById('uitleg').textContent = gekozen.length
+    ? `${state.beperkt ? 'Geschikt of beperkt geschikt' : 'Geschikt'} voor ${gekozen.join(' én ')}`
+    : 'Kies hierboven een of meer standplaatsen';
+
+  document.getElementById('tegels').innerHTML = zichtbaar.length ? zichtbaar.map((b, i) => `
+    <button class="tegel" type="button" data-i="${i}" aria-label="${esc(b.nl)}, ${esc(b.wet)}: toon alle informatie">
+      <div class="foto">${fotoHtml(b)}<span class="badge">${esc(b.grootte)} grootte</span></div>
+      <div class="tekst">
+        <div><div class="wet">${wetHtml(b.wet)}</div><div class="nl">${esc(b.nl)}</div></div>
+        <div class="pills">${PLEKKEN.map(p => `<span class="pill ${esc(b[p])}${state.plekken.size && !state.plekken.has(p) ? ' dim' : ''}">${LABEL[p]}</span>`).join('')}</div>
+        ${(g => g.m3 != null ? `<div class="m3">Groeiplaats <b>${getal(g.m3)} m³</b></div>` : `<div class="m3 leeg-m3">Groeiplaats: nog in te vullen</div>`)(groeiplaats(b))}
+      </div>
+    </button>`).join('') : `<div class="leeg">Geen soorten met deze combinatie. Zet "beperkt geschikt" aan of wis een filter.</div>`;
+  bewaar();
+}
+
+const dlg = document.getElementById('detail');
+function toon(b) {
+  document.getElementById('d-inhoud').innerHTML = `
+    <div class="foto">${fotoHtml(b)}</div>
+    <div class="inhoud">
+      <div><div class="wet" id="d-wet">${wetHtml(b.wet)}</div><div class="nl">${esc(b.nl)}</div></div>
+      <dl class="feiten">
+        <dt>Grootte</dt><dd>${esc(GROOTTE[b.grootte] || b.grootte)}</dd>
+        <dt>Inheems</dt><dd>${esc(b.inheems)}</dd>
+        <dt>Boomkroon</dt><dd>${b.kroonM2 ? getal(b.kroonM2) + ' m² (Ø ' + getal(b.kroon) + ' m, volwassen)' + (b.bron ? ' · bron: ' + esc(b.bron) : '') : 'nog in te vullen'}</dd>
+      </dl>
+      <div class="blok"><h3>Geschikt voor</h3>
+        <div class="geschikt">${PLEKKEN.map(p => `<div><span>${LABEL[p]}</span><span><span class="pill ${esc(b[p])}">${esc(b[p])}</span> <span class="nl">${UITLEG[b[p]] || ''}</span></span></div>`).join('')}</div>
+      </div>
+      ${(g => `<div class="blok"><h3>Benodigde groeiplaats</h3><div class="gp-detail">${g.m3 != null
+        ? `<span class="getal">${getal(g.m3)} m³</span><span class="klein">Grondvlak ${getal(g.m3 / state.diepte)} m² bij ${getal(state.diepte)} m doorwortelbare diepte</span>`
+        : `<span class="klein">Nog niet ingevuld in de bomenlijst.</span>`}
+        ${g.perSoort ? `<span class="klein">Groeiplaatsverbetering per boom, uit de bomenlijst${g.bron ? ' · bron: ' + esc(g.bron) : ''}</span>` : !DATA.groeiplaats.length ? '' : `<span class="klein">${esc(b.grootte)} grootte · ${esc(g.w)}${b.groeiwijze ? '' : ' (groeiwijze nog niet ingevuld)'} · ${esc(state.profiel)} · ${esc(state.niveau)} · omloop ${g.omloop ?? '–'} jaar${g.bron ? ' · bron: ' + esc(g.bron) : ''}</span>`}</div></div>`)(groeiplaats(b))}
+      <div class="blok"><h3>Aandachtspunten</h3><p>${esc(b.noot) || 'Geen.'}</p></div>
+      ${b.status ? `<div class="status">${esc(b.status)}</div>` : ''}
+    </div>`;
+  dlg.showModal();
+}
+document.getElementById('tegels').addEventListener('click', e => {
+  const t = e.target.closest('.tegel'); if (t) toon(zichtbaar[+t.dataset.i]);
+});
+function renderTabel() {
+  if (!DATA.groeiplaats.length) return;
+  const rijen = [];
+  ['1e', '2e', '3e'].forEach(g => Object.keys(OMLOOP).forEach(w => rijen.push({ g, w })));
+  const kop = `<tr><th>Grootte · groeiwijze</th>${[...Array(STAPPEN).keys()].map(i => `<th>Omloop ${Object.keys(OMLOOP).map(w => OMLOOP[w][i]).filter(Boolean).join(' / ')} jr</th>`).join('')}</tr>`;
+  document.getElementById('gp-tabel').innerHTML = kop + rijen.map(({ g, w }) => `<tr><td>${g} grootte · ${w}</td>${(OMLOOP[w] || []).map((o, i) => {
+    const r = DATA.groeiplaats.find(r => r.grootte === g && r.groeiwijze === w && r.profiel === state.profiel && r.niveau === state.niveau && r.omloop === o);
+    const cls = [r && r.m3 != null ? '' : 'open', i === state.stap ? 'actief' : ''].join(' ');
+    return `<td class="${cls}">${r && r.m3 != null ? getal(r.m3) + ' m³' : '–'}</td>`;
+  }).join('')}</tr>`).join('');
+  const gevuld = DATA.groeiplaats.filter(r => r.m3 != null).length;
+  document.getElementById('gp-uitleg').textContent = `${state.profiel} · ${state.niveau} · ${gevuld} van ${DATA.groeiplaats.length} waarden ingevuld`;
+  document.getElementById('gp-noot').textContent = 'Waarden in te vullen uit de Boommonitor / Handboek Bomen (Norminstituut Bomen) in het tabblad Groeiplaats. Bomen zonder ingevulde groeiwijze worden als regulier gerekend. Kolomkoppen: omloop regulier / pionier.';
+}
+
+// Zonder tabblad Groeiplaats: alleen de waarden per soort, dus geen omloop/profielkeuze en geen tabel
+if (!DATA.groeiplaats.length) {
+  document.querySelector('.gp-tabel').hidden = true;
+  ['g-profiel', 'g-niveau', 'g-stap'].forEach(id => { document.getElementById(id).hidden = true; document.querySelector(`label[for="${id}"]`).hidden = true; });
+}
+const stapSel = document.getElementById('g-stap');
+stapSel.innerHTML = [...Array(STAPPEN).keys()].map(i => `<option value="${i}">${Object.keys(OMLOOP).map(w => `${OMLOOP[w][i]} jaar${w === 'regulier' ? '' : ' (' + w + ')'}`).join(' · ')}</option>`).join('');
+if (state.stap >= STAPPEN) state.stap = 0;
+document.getElementById('g-profiel').addEventListener('change', e => { state.profiel = e.target.value; render(); });
+document.getElementById('g-niveau').addEventListener('change', e => { state.niveau = e.target.value; render(); });
+stapSel.addEventListener('change', e => { state.stap = +e.target.value; render(); });
+document.getElementById('g-diepte').addEventListener('change', e => { const v = parseFloat(e.target.value); if (v > 0) state.diepte = v; render(); });
+
+document.getElementById('d-sluit').addEventListener('click', () => dlg.close());
+dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+document.querySelectorAll('.plek').forEach(el => el.addEventListener('click', () => {
+  const p = el.dataset.plek; state.plekken.has(p) ? state.plekken.delete(p) : state.plekken.add(p); render();
+}));
+document.querySelectorAll('#f-grootte .chip').forEach(el => el.addEventListener('click', () => {
+  const g = el.dataset.g; state.grootte.has(g) ? state.grootte.delete(g) : state.grootte.add(g); render();
+}));
+document.getElementById('f-beperkt').addEventListener('change', e => { state.beperkt = e.target.checked; render(); });
+document.getElementById('f-herkomst').addEventListener('change', e => { state.herkomst = e.target.value; render(); });
+document.getElementById('f-sort').addEventListener('change', e => { state.sort = e.target.value; render(); });
+document.getElementById('f-zoek').addEventListener('input', e => { state.zoek = e.target.value; render(); });
+document.getElementById('f-reset').addEventListener('click', () => {
+  Object.assign(state, { ...STANDAARD, plekken: new Set(), grootte: new Set() }); render();
+});
+
+document.getElementById('uitgesloten').innerHTML = DATA.uitgesloten.map(u =>
+  `<li><div><div class="wet">${wetHtml(u.wet)}</div><div class="nl">${esc(u.nl)}</div></div><div class="noot">${esc(u.reden)}</div></li>`).join('');
+document.getElementById('datum').textContent = DATA.datum;
+render();
+</script>

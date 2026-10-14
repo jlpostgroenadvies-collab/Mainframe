@@ -34,24 +34,19 @@ export const categories: DienstCategorie[] = [
     title: "Groenadvies",
     services: [
       {
-        title: "Controle van (groen)plannen",
+        title: "Onafhankelijke toets van plannen",
         description:
-          "Laat een offerte, beplantingsplan of ontwerp van uw hovenier of aannemer onafhankelijk controleren voordat u tekent. Ik beoordeel op vakinhoudelijke juistheid, prijs-kwaliteitverhouding en haalbaarheid, en geef u een helder advies — zonder dat ik zelf belang heb bij de uitvoering. Mijn laagdrempeligste dienst: snel en zonder dat een locatiebezoek nodig is.",
+          "Een onafhankelijke toets van een ontwerp, beplantingsplan, bestek of inschrijving van de aannemer, voordat de gemeente gunt of goedkeurt. Ik beoordeel op vakinhoudelijke juistheid, prijs-kwaliteitverhouding en haalbaarheid. Omdat ik zelf geen belang heb bij de uitvoering, krijgt u een onafhankelijk oordeel. Vaak is een beoordeling op basis van de stukken voldoende, zonder locatiebezoek.",
       },
       {
-        title: "Advies over klimaatadaptatie en ontharding",
+        title: "Klimaatadaptatie en ontharding",
         description:
-          "Hittestress, wateroverlast en verdroging vragen om een groene aanpak. Ik adviseer over ontharding, waterberging en klimaatbestendige inrichting van tuin of terrein — praktisch en afgestemd op uw situatie, niet als abstract beleidsstuk.",
+          "Advies over ontharding, waterberging en een klimaatbestendige inrichting van straten, pleinen en wijken: praktisch toepasbaar in het project, niet als abstract beleidsstuk. Ook voor groenvragen die niet in een vast traject passen, van bodem en groeiplaats tot regelgeving.",
       },
       {
-        title: "Algemeen groenadvies",
+        title: "Hoeveelheden en kostenramingen",
         description:
-          "Voor vragen die niet meteen in een vast traject passen: van boomkeuze tot inrichting, van bodemkwaliteit tot regelgeving. Eén gesprek, gericht advies.",
-      },
-      {
-        title: "Kostenramingen groen",
-        description:
-          "Voorafgaand aan een project inzicht in de kosten? Ik stel hoeveelheden en een onderbouwde kostenraming op voor aanleg, onderhoud of beheer, volgens de SSK-opbouw en met RAW-posten, zodat u niet voor verrassingen komt te staan bij het aanvragen van offertes.",
+          "Hoeveelheden en een onderbouwde kostenraming voor aanleg, onderhoud of beheer, opgebouwd volgens de SSK en met RAW-posten. Zo heeft de gemeente vooraf een betrouwbaar beeld van de kosten, als basis voor budget, bestek en aanbesteding.",
       },
     ],
   },
@@ -60,19 +55,14 @@ export const categories: DienstCategorie[] = [
     title: "Ontwerp",
     services: [
       {
-        title: "Technisch ontwerp",
+        title: "Groenontwerp openbare ruimte",
         description:
-          "Een uitvoeringsgericht ontwerp met concrete maatvoering, materialisatie en detaillering — de vertaalslag van idee naar realiseerbaar plan, direct bruikbaar voor de hovenier of aannemer die het gaat uitvoeren.",
+          "Van schetsontwerp tot uitgewerkt plan voor straten, pleinen, parken en nieuwe wijken, passend binnen de eisen voor klimaatadaptatie en de gemeentelijke randvoorwaarden. Ook voor ontwikkelaars die groen als volwaardig onderdeel van hun project willen.",
       },
       {
-        title: "Groenontwerp voor openbare ruimte en projectontwikkeling",
+        title: "Technisch ontwerp en beplantingsplan",
         description:
-          "Voor ontwikkelaars en opdrachtgevers die groen als volwaardig onderdeel van hun project willen: van eerste schetsontwerp tot een uitgewerkt plan dat aansluit op klimaatadaptatie-eisen en gemeentelijke randvoorwaarden.",
-      },
-      {
-        title: "Beplantingsplan",
-        description:
-          "Het beplantingsplan vertaalt het ontwerp naar concrete soortkeuze, aantallen en plantafstanden — de basis voor een geslaagde aanplant en een groene ruimte die op de lange termijn standhoudt.",
+          "Uitwerking tot een uitvoeringsgereed plan: maatvoering, materialisatie en detaillering, en een beplantingsplan met soortkeuze, aantallen en plantafstanden. Direct bruikbaar als basis voor het bestek en de uitvoering.",
       },
     ],
   },
@@ -81,19 +71,14 @@ export const categories: DienstCategorie[] = [
     title: "Beplanting",
     services: [
       {
-        title: "Soortkeuze en standplaatsadvies",
+        title: "Soortkeuze en plantselectie",
         description:
-          "De juiste plant op de juiste plek: ik adviseer over soortkeuze op basis van bodem, standplaats, klimaat en gebruiksdoel, zodat beplanting aanslaat en zich goed ontwikkelt. Desgewenst uitgewerkt in een plantselectietabel met per soort de tolerantie voor strooizout en wind en de ecologische waarde.",
+          "De juiste plant op de juiste plek, op basis van bodem, standplaats, klimaat en gebruik, met gerichte keuzes voor verkoeling, schaduw en wateropvang. Desgewenst uitgewerkt in een plantselectietabel met per soort de tolerantie voor strooizout en wind en de ecologische waarde.",
       },
       {
-        title: "Aanplantbegeleiding en uitzetten van beplanting",
+        title: "Aanplantbegeleiding",
         description:
-          "Begeleiding tijdens de uitvoering: van het uitzetten van de beplanting op locatie tot toezicht op correcte aanplant, zodat het plan ook daadwerkelijk wordt uitgevoerd zoals bedoeld.",
-      },
-      {
-        title: "Beplanting bij klimaatadaptatie (verkoeling, wateropvang)",
-        description:
-          "Gerichte beplantingskeuzes voor verkoeling, schaduw en wateropvang — functioneel groen dat bijdraagt aan een klimaatbestendige omgeving en niet alleen mooi is.",
+          "Begeleiding tijdens de uitvoering: het uitzetten van de beplanting op locatie en toezicht op een correcte aanplant door de aannemer, zodat het plan wordt uitgevoerd zoals bedoeld.",
       },
     ],
   },
@@ -102,21 +87,15 @@ export const categories: DienstCategorie[] = [
     title: "Beheerplannen",
     services: [
       {
-        title: "Onderhoudsplanning (eenmalig)",
+        title: "Onderhoudsplanning en MJOP",
         description:
-          "Een heldere eenmalige onderhoudsplanning voor uw groen: welke werkzaamheden, wanneer en waarom — als basis voor eigen beheer of voor de opdracht aan een hovenier.",
+          "Een eenmalige onderhoudsplanning of een meerjarenonderhoudsplan (MJOP) voor het groen: welke werkzaamheden, wanneer en tegen welke verwachte kosten. Als basis voor de begroting en voor het bestek van de beheeraannemer.",
       },
       {
-        title: "Meerjarenonderhoudsplan (MJOP)",
+        title: "Beheeradvies",
         description:
-          "Voor wie op lange termijn grip wil houden op kosten en kwaliteit van groen: een MJOP met een overzicht van werkzaamheden en verwachte kosten over meerdere jaren, inzetbaar voor VvE's, opdrachtgevers en beheerders.",
-      },
-      {
-        title: "Beheeradvies voor opdrachtgevers",
-        description:
-          "Specialistisch advies ter ondersteuning van opdrachtgevers bij complexe beheervraagstukken — als aanvulling op de eigen expertise, niet als vervanging.",
+          "Specialistisch advies bij complexe beheervraagstukken, als aanvulling op de kennis van de eigen beheerorganisatie.",
       },
     ],
   },
 ];
-

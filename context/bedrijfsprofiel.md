@@ -20,6 +20,7 @@
 - Groenekan: Copijnlaan (plantposten uit RAW-bestek)
 
 ### Positionering
+Focus (besluit 2026-10-12): (1) plantselectie en kleine beplantingsplannen; (2) natuurherstelverordening art. 8: waar en hoe gemeenten kunnen vergroenen, van kansenkaart tot plantlijst (product "Vergroeningsscan NHV"). Onderscheid: kwantiteit (m² groen, boomkroon) én kwaliteit (ecologie, standplaats), onafhankelijk, met kwekerijkennis.
 [AANVULLEN: kernboodschap in 1–2 zinnen, bijv. waarom gemeenten voor J.L. Post kiezen]
 
 ### Contactgegevens voor documenten

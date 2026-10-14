@@ -47,11 +47,4 @@ export const projects: Project[] = [
     category: "Hoeveelheden en ramingen",
     description: "Veldopname van het bestaande groen.",
   },
-  {
-    id: 6,
-    title: "Copijnlaan",
-    client: "Groenekan",
-    category: "Hoeveelheden en ramingen",
-    description: "Plantposten uitgewerkt uit het RAW-bestek.",
-  },
 ];
