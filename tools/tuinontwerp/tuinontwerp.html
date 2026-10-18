@@ -109,6 +109,9 @@ body.klant main { grid-template-columns: minmax(0, 1fr); }
 .alleen-klant { display: none; }
 body.klant .alleen-klant { display: block; }
 body.klant #plan { cursor: grab; }
+.watermerk { position: absolute; right: 10px; bottom: 8px; display: none; align-items: center; gap: 8px; background: rgba(255,255,255,.9); border-radius: 8px; padding: 5px 9px 5px 6px; font-size: 0.72rem; color: #1F5D04; font-weight: 600; pointer-events: none; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+.watermerk img { height: 40px; width: auto; display: block; }
+body.klant .watermerk { display: flex; }
 .bijschrift { position: absolute; right: 10px; bottom: 8px; font-size: 0.75rem; color: #fff; background: rgba(30,42,25,.55); padding: 3px 8px; border-radius: 6px; pointer-events: none; }
 .melding { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); background: var(--fg); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 0.88rem; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 10; }
 .melding.zichtbaar { opacity: 0.95; }
@@ -164,6 +167,7 @@ body.klant #plan { cursor: grab; }
           <button class="knop klein" id="knopPassend">Passend in beeld</button>
         </div>
         <div class="status" id="statusPlan"></div>
+        <div class="watermerk"><img alt="J.L. Post Groenadvies">Ontwerp</div>
       </div>
       <div class="paneel" id="paneelDrie">
         <canvas id="drie"></canvas>
@@ -176,7 +180,7 @@ body.klant #plan { cursor: grab; }
           <span class="seg" role="group" aria-label="Weergave 3D"><button data-kwaliteit="maquette">Maquette</button><button data-kwaliteit="realistisch">Realistisch</button></span>
         </div>
         <div class="status" id="statusDrie"></div>
-        <div class="bijschrift alleen-klant">Indicatieve 3D-impressie · J.L. Post Groenadvies</div>
+        <div class="watermerk"><img alt="J.L. Post Groenadvies">3D-impressie</div>
       </div>
     </div>
     <div class="tijdbalk">
@@ -359,6 +363,9 @@ const MAANDEN = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli',
 // Klantversie: project en texturen zitten in het bestand zelf (window.__KLANT); de tool is dan alleen-bekijken.
 const KLANT = window.__KLANT || null;
 const TEXTUREN = ['gras', 'grind', 'zand', 'aarde', 'houtsnippers', 'beton', 'klinkers', 'baksteen', 'planken', 'schors'];
+const LOGO_URL = KLANT?.logo || 'logo-klein.png';
+const logoBeeld = new Image(); logoBeeld.src = LOGO_URL;
+document.querySelectorAll('.watermerk img').forEach(i => { i.src = LOGO_URL; });
 const textuurUrl = naam => KLANT?.texturen?.[naam] || `texturen/${naam}.jpg`;
 
 // =====================================================================
@@ -1840,16 +1847,30 @@ const drie = (() => {
     const data = await new GLTFExporter().parseAsync(inhoud, { binary: true });
     download(new Blob([data], { type: 'model/gltf-binary' }), `${project.naam}.glb`);
   }
+  // kopie van het beeld met het logo klein in de rechteronderhoek (op een wit kaartje, zodat het op elke achtergrond leesbaar is)
+  function metWatermerk(bron) {
+    const c = document.createElement('canvas'); c.width = bron.width; c.height = bron.height;
+    const g = c.getContext('2d'); g.drawImage(bron, 0, 0);
+    if (!logoBeeld.complete || !logoBeeld.naturalWidth) return c;
+    const lb = Math.round(c.width * 0.085), lh = Math.round(lb * logoBeeld.naturalHeight / logoBeeld.naturalWidth);
+    const marge = Math.round(c.width * 0.015), pad = Math.round(lb * 0.08);
+    const x = c.width - marge - lb - 2 * pad, y = c.height - marge - lh - 2 * pad;
+    g.fillStyle = 'rgba(255,255,255,0.9)'; g.beginPath(); g.roundRect(x, y, lb + 2 * pad, lh + 2 * pad, pad * 1.5); g.fill();
+    g.drawImage(logoBeeld, x + pad, y + pad, lb, lh);
+    return c;
+  }
   function png() { // tijdelijk op hoge resolutie (ca. 3000 px breed) renderen voor presentaties
     const oud = renderer.getPixelRatio(), w = canvas.clientWidth, h = canvas.clientHeight, f = Math.min(4, Math.max(oud, 3000 / w));
     renderer.setPixelRatio(f); composer.setPixelRatio(f); composer.setSize(w, h); tekenNu();
-    canvas.toBlob(b => {
+    const beeld = metWatermerk(canvas);
+    beeld.toBlob(b => {
       download(b, `${project.naam} – ${MAANDEN[inst().maand - 1]}, ${inst().jaren >= 31 ? 'volgroeid' : inst().jaren + ' jaar'}.png`);
       renderer.setPixelRatio(oud); composer.setPixelRatio(oud); composer.setSize(w, h); render();
     }, 'image/png');
   }
   grondEcht = new THREE.MeshStandardMaterial({ map: textuur('straat', 2, (g, n) => ruis(g, n, '#c2bfb8', 0.1, 9000, 1)), roughness: 0.95 });
-  return { bouw, zon, render, camera: camera_, glb, png, renderer, zetStartCamera: c => { startCamera = c; } };
+  const pngVoorbeeld = () => { tekenNu(); return metWatermerk(canvas).toDataURL('image/jpeg', 0.8); }; // voor testen
+  return { bouw, zon, render, camera: camera_, glb, png, pngVoorbeeld, renderer, zetStartCamera: c => { startCamera = c; } };
 })();
 
 let planTimer;
@@ -1917,8 +1938,9 @@ async function klantversie() {
     const bron = await (await fetch(location.pathname)).text();
     const texturen = {};
     for (const naam of TEXTUREN) for (const s of ['kleur', 'normaal']) texturen[`${naam}_${s}`] = await verkleind(`texturen/${naam}_${s}.jpg`);
+    const logo = await new Promise(async ok => { const b = await (await fetch('logo-klein.png')).blob(); const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.readAsDataURL(b); });
     const p = structuredClone(project); delete p.ondergrond; // de ondergrond (schets/tekening) gaat niet mee
-    const data = JSON.stringify({ project: p, texturen, gemaakt: new Date().toISOString().slice(0, 10) }).replace(/</g, '\\u003c');
+    const data = JSON.stringify({ project: p, texturen, logo, gemaakt: new Date().toISOString().slice(0, 10) }).replace(/</g, '\\u003c');
     const html = bron.replace('<script type="importmap">', `<script>window.__KLANT = ${data};<\/script>\n<script type="importmap">`) // <\/ : anders sluit de browser hier het script af
                      .replace('<title>Tuinontwerp</title>', `<title>${esc(project.naam)} – 3D-ontwerp</title>`);
     download(new Blob([html], { type: 'text/html' }), `${project.naam} – 3D-ontwerp.html`);
@@ -1956,6 +1978,7 @@ if (KLANT) {
       if (q.get('kwaliteit')) p.instellingen.kwaliteit = q.get('kwaliteit');
       laadProject(p);
       if (q.get('legenda')) document.querySelector(`[data-vlak="${q.get('legenda')}"]`)?.click();
+      if (q.get('toonpng')) setTimeout(() => { const i = new Image(); i.src = drie.pngVoorbeeld(); i.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:99'; document.body.appendChild(i); }, 12000); // test: toon de opgeslagen afbeelding
       if (q.get('weergave')) document.querySelector(`[data-weergave="${q.get('weergave')}"]`)?.click();
     }).catch(e => toonFout('Project kon niet worden geladen: ' + e.message));
 } else if (start?.vlakken) { try { laadProject(start); } catch { alles(); } }

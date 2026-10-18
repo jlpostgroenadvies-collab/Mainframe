@@ -25,6 +25,7 @@ node lees-tekening.mjs "<tekening.pdf>" "../../output/<project>/<project>.tuin.j
 De aanvulling (in `bronnen/`, niet in GitHub) bevat in PDF-punten: extra vlakken (bijv. tegels met arcering), objecten (bomen, bank, schommel), te verwijderen vlakken en hernoemingen. Voorbeeld: `bronnen/<eerste testproject>/aanvulling.json` (lokaal). Controleer de schaal altijd aan een bekende maat, bijvoorbeeld een tegelstrook van 0,30 m.
 
 ## Uitgangspunten
+- Watermerk: opgeslagen afbeeldingen (PNG) krijgen het logo klein rechtsonder op een wit kaartje; de klantversie (html) toont het logo rechtsonder in 3D en plattegrond. Bron: `logo-klein.png` (bijgesneden uit huisstijl/logo.png); in de klantversie zit het logo in het bestand zelf.
 - Bronnen realistische weergave: texturen van ambientCG (CC0, vrij te gebruiken, ook commercieel; bronnen: Grass005, Gravel023, Ground054, Ground048, WoodChips001, Concrete046, PavingStones128, Bricks101, Planks037A, Bark012), boomgenerator EZ-Tree (MIT, Daniel Greenheck), lucht: Three.js Sky. Bomen en struiken zijn een generiek beeld per soort, geen botanisch exacte weergave.
 - Testen (Claude): `?log=1` stuurt browsermeldingen naar de server; testbeelden via Edge headless met `--screenshot`.
 - Maquettestijl (low-poly), later op te waarderen via de .glb-export naar Blender (gratis, ook commercieel).
