@@ -1,0 +1,40 @@
+# Tuinontwerp – broncode
+
+Ontwerptool voor particuliere tuinen en openbare ruimte: van schets of tekening naar een 2D-plattegrond met vlakken en objecten, met een 3D-maquette die meegroeit en per seizoen verandert. Alleen voor eigen gebruik van J.L. Post Groenadvies.
+
+## Openen
+Dubbelklik **Tuinontwerp starten.cmd** (in deze map). Dat start de lokale server en opent Edge op http://localhost:8766/tuinontwerp.html. Laat het zwarte venster open zolang je werkt. Een project direct openen: `http://localhost:8766/tuinontwerp.html?project=/output/<project>/<project>.tuin.json`.
+De server is nodig: de fototexturen in `texturen/` laden niet als je het html-bestand los opent. Internet is nodig voor Three.js, de boomgenerator en de PDF-lezer (jsDelivr). Gaat er iets mis, dan staat er een rode foutbalk bovenin.
+
+## Werkwijze
+1. **Ondergrond**: foto/scan van een papieren schets (recht van boven) of een PDF. Bij een PDF vraagt de tool de schaal (1:…) en staat hij direct op maat; bij een foto stel je de schaal in met twee punten met bekende afstand.
+2. **Vlakken tekenen** met de legendatypen (gras, halfverharding, siergrind, zwembad (met stenen rand), tegels, sierbeplanting, bloemenmengsel, …). Hoekpunten slepen, punten toevoegen/verwijderen, "vloeiende rand" voor ronde vormen.
+3. **Legenda aanpassen**: klik op een legendapost (dubbelklik = direct tekenen). Rechts verschijnt een kaart met naam, kleur, 3D-weergave (standaard, plat, struiken, haag) en hoogte, die gelden voor alle vlakken van dat type. Daarnaast een opdrachtveld met vaste zinnen (geen AI): "maak dit 1 meter hoog", "als haag van 1,5 m", "als struiken", "maak dit plat", "kleur donkergroen", "noem dit …", "terug naar standaard". Voor verharding (tegels, terras, klinkers, grind, siergrind, zand, vlonder, rand) ook: tegelmaat ("tegels 60x60", "40 bij 80"), kleur in plattegrond én 3D ("antraciet", "lichtgrijs", "donkergrijs", "zandkleur", "terracotta", of #hex) en legverband ("halfsteens", "recht verband"); de legendanaam volgt de tegelmaat. Opgeslagen in het project onder `legenda`.
+4. **Objecten plaatsen**: bomen (met soort), heesters, zitbank, picknickbank, nestschommel, glijbaan, wipwap, duikelrek, zandbak (maat instelbaar), lantaarnpaal, afvalbak, fietsnietjes, poller, plantenbak met beplanting (maat en soort instelbaar), persoon voor de schaal. Particuliere tuin: tuinset, loungebank, ligbed, parasol, pergola en tuinhuis (maat instelbaar), barbecue, vuurschaal, jacuzzi, ingegraven trampoline, regenton, compostbak, tuinlamp. Het palet toont per soort project de passende objecten ("alle typen tonen" voor alles). **Eigen 3D-model (.glb/.gltf)**: inladen, klikken om te plaatsen, schaal instelbaar; het model wordt in het projectbestand opgeslagen. Gebruik alleen modellen met een licentie die commercieel gebruik toestaat (bijv. CC0 van Poly Haven, of modellen van de leverancier). Eigen generieke modellen met gangbare maten (aanname, gemarkeerd).
+5. **3D**: twee standen. *Realistisch* (standaard): fototexturen, lucht met zonnestand, bomen en struiken uit de boomgenerator EZ-Tree, losse grassprieten, bloemenmengsel met bloemen, gevels met ramen, hagen met blad, water met spiegeling van de lucht, zachte schaduw in hoeken (ambient occlusion, GTAO), gladde randen (MSAA), natuurlijke variatie in gras/grind/grond, jonge bomen met een eigen jonge vorm. Beeld opslaan gebeurt op ca. 3000 px breed. *Maquette*: eenvoudig en snel. Camera: vogelvlucht (zoekt zelf vrij zicht langs gebouwen), bovenaanzicht, ooghoogte. Beeld opslaan als PNG; model als .glb (voor Blender).
+6. **Tijdbalk**: maand (bloei, herfstkleur, kaal), jaren na aanleg (groei) en tijdstip (zonnestand en schaduw, Utrecht/Maarssen-breedte).
+7. **Klantversie (html)** (knop bovenin): één los html-bestand (ca. 2 MB) met het project en verkleinde texturen erin. De klant opent het met een dubbelklik (internet nodig voor Three.js en de boomgenerator), kan draaien, zoomen, plattegrond/3D wisselen, met maand, jaren en tijdstip schuiven en een beeld opslaan, maar niets wijzigen. De ondergrond (schets/tekening) gaat niet mee. Opslaan in `output/<project>/`. Let op: het is een bekijkversie, geen beveiliging; wie de code opent kan de projectgegevens lezen.
+8. **Hoeveelheden**: m² per vlaktype, aantallen objecten en indicatieve plantaantallen (oppervlak x planten per m²).
+
+## Tekening op schaal automatisch inlezen (Claude doet dit)
+`lees-tekening.mjs` leest een vector-PDF op schaal en herkent vlakken aan de legendakleuren van Joris (bestaand groen, grasveld, moestuin, halfverharding, bloemenmengsel; sierbeplanting aan het groene verloop; dikke zwarte lijnen als rand; grijs als bebouwing). Eenmalig `npm install` in deze map.
+
+```
+node lees-tekening.mjs "<tekening.pdf>" "../../output/<project>/<project>.tuin.json" --naam "<Project>" --schaal 100 --aanvulling "../../bronnen/<project>/aanvulling.json"
+```
+De aanvulling (in `bronnen/`, niet in GitHub) bevat in PDF-punten: extra vlakken (bijv. tegels met arcering), objecten (bomen, bank, schommel), te verwijderen vlakken en hernoemingen. Voorbeeld: `bronnen/<eerste testproject>/aanvulling.json` (lokaal). Controleer de schaal altijd aan een bekende maat, bijvoorbeeld een tegelstrook van 0,30 m.
+
+## Uitgangspunten
+- Bronnen realistische weergave: texturen van ambientCG (CC0, vrij te gebruiken, ook commercieel; bronnen: Grass005, Gravel023, Ground054, Ground048, WoodChips001, Concrete046, PavingStones128, Bricks101, Planks037A, Bark012), boomgenerator EZ-Tree (MIT, Daniel Greenheck), lucht: Three.js Sky. Bomen en struiken zijn een generiek beeld per soort, geen botanisch exacte weergave.
+- Testen (Claude): `?log=1` stuurt browsermeldingen naar de server; testbeelden via Edge headless met `--screenshot`.
+- Maquettestijl (low-poly), later op te waarderen via de .glb-export naar Blender (gratis, ook commercieel).
+- Soortgegevens zonder bron staan als **aanname** gemarkeerd en zijn per project aan te passen (tabblad Soorten). Geen waarden verzinnen: cultivar, maten en bloei laten bevestigen.
+- Coördinaten in meters, noord boven, (0,0) in het midden van het ontwerp. Nog niet gekoppeld aan RD/PDOK.
+- Alles gratis: Three.js, pdf.js, Node-pakketten (zie `package.json`).
+
+## Nog te doen (volgende stappen)
+- Wandelroute vastleggen en als video opnemen.
+- Groenmast-producten als object (productblad/foto nodig).
+- Hoogteverschillen uit AHN (na koppeling met PDOK/RD).
+- Plattegrond op schaal als PDF, plantlijst naar Excel, koppeling met kostenraming.
+- Optioneel: ondergrond uit PDOK/BGT en 3D-gebouwen met echte hoogtes (3D BAG).

@@ -22,6 +22,7 @@ Eigenaar van J.L. Post Groenadvies: onafhankelijk groenadvies en landschapsontwe
 | Documenten opmaken | `context/huisstijl.md` |
 | Lopende opdrachten | `geheugen/projecten.md` |
 | Bomentool (boomselectie + ontwerptool NHV) | `tools/bomentool/LEESMIJ.md` |
+| Tuinontwerp (2D-ontwerp → 3D-maquette, tuinen en openbare ruimte) | `tools/tuinontwerp/LEESMIJ.md` |
 | Website (map `website/`) | `website/LEESMIJ.md`: noem Joris eerst de open punten onder "Nog te doen" |
 
 ## Mappen

@@ -1,0 +1,16 @@
+{
+  "name": "tuinontwerp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tuin- en openbare-ruimte-ontwerptool van J.L. Post Groenadvies",
+  "dependencies": {
+    "@napi-rs/canvas": "0.1.65",
+    "d3-contour": "4.0.2",
+    "pdfjs-dist": "4.10.38",
+    "simplify-js": "1.2.4"
+  },
+  "devDependencies": {
+    "puppeteer-core": "23.11.1"
+  }
+}
