@@ -30,7 +30,7 @@ Testbeelden met Edge headless (zie LEESMIJ › Testen): vogelvlucht, ooghoogte, 
 
 ## Stap 5 – Opleveren
 - `output/<project>/<project>.tuin.json` en kopie in de OneDrive-projectmap.
-- Klantversie: `node tools/tuinontwerp/maak-klantversie.js <project.tuin.json> "<OneDrive-projectmap>/<Project> – 3D-ontwerp.html"`; testen vanuit OneDrive.
+- Klantversie: `node tools/tuinontwerp/maak-klantversie.cjs <project.tuin.json> "<OneDrive-projectmap>/<Project> – 3D-ontwerp.html"`; testen vanuit OneDrive.
 - Open het project in Edge voor Joris (`cmd //c start "" msedge "http://localhost:8766/tuinontwerp.html?project=/output/<map>/<bestand>.tuin.json"`; `&` in cmd escapen als `^&`).
 - Meld kort: wat erin zit, de aannames om na te kijken, en de ontbrekende soorten.
 

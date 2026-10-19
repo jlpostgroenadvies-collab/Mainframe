@@ -2509,7 +2509,7 @@ if (KLANT) {
   fetch(q.get('dxf')).then(r => r.text()).then(tekst => { startDxfImport(q.get('dxf').split('/').pop(), tekst); if (q.get('dxfauto')) dxfImporteren(); if (q.get('lopen')) setTimeout(() => drie.startLopen(), 3000); if (q.get('testloop')) setTimeout(() => drie.testLopen(+q.get('testloop')), 4500); if (q.get('weergave')) document.querySelector(`[data-weergave="${q.get('weergave')}"]`)?.click(); });
 } else if (start?.vlakken) { try { laadProject(start); } catch { alles(); } }
 else { alles(); setTimeout(() => { passend(); drie.camera('vogel'); }, 100); status('Begin met "Ondergrond laden" (rechts) of open een bestaand project.'); }
-window.__tuin = { get project() { return project; }, laadProject, drie }; // voor testen
+window.__tuin = { get project() { return project; }, laadProject, drie, startDxfImport, dxfImporteren }; // voor testen en scripts
 </script>
 </body>
 </html>

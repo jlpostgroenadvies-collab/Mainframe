@@ -1,11 +1,11 @@
 // Maakt de klantversie (los html-bestand) van een project, zonder de browser. De lokale server moet draaien (Tuinontwerp starten).
-// Gebruik: node maak-klantversie.js <project.tuin.json> <uitvoer.html>
+// Gebruik: node maak-klantversie.cjs <project.tuin.json> <uitvoer.html>
 // Doet hetzelfde als de knop "Klantversie (html)": texturen verkleind ingebed, logo, gebruikte soorten uit de plantenlijst; ondergrond en productbladen gaan niet mee.
 const fs = require('fs'), path = require('path');
 const { loadImage, createCanvas } = require('@napi-rs/canvas');
 const HIER = __dirname;
 const [projectPad, uitPad] = process.argv.slice(2);
-if (!projectPad || !uitPad) { console.log('Gebruik: node maak-klantversie.js <project.tuin.json> <uitvoer.html>'); process.exit(1); }
+if (!projectPad || !uitPad) { console.log('Gebruik: node maak-klantversie.cjs <project.tuin.json> <uitvoer.html>'); process.exit(1); }
 (async () => {
   const bron = await (await fetch('http://localhost:8766/tuinontwerp.html')).text();
   const texturen = {};
