@@ -52,6 +52,7 @@ Eigenaar van J.L. Post Groenadvies: onafhankelijk groenadvies en landschapsontwe
 - `nieuwe-skill` – Joris een nieuwe vaste werkwijze laten toevoegen
 - `mail-concepten` – nieuwe mail lezen en antwoorden als concept klaarzetten (nooit verzenden)
 - `factuur` – factuur maken uit de weekstaten in OneDrive (xlsx + pdf, eigen opmaak)
+- `3d-ontwerp` – 3D-ontwerp in de tuinontwerptool maken of aanpassen vanuit de projectstukken; project + klantversie naar OneDrive
 
 ## Andere AI's (in opbouw)
 - ChatGPT: via de Codex-extensie in VSCode met Joris' ChatGPT-abonnement, op dezelfde map. Codex leest `AGENTS.md`; houd dat bestand in lijn met dit bestand als regels of skills veranderen.

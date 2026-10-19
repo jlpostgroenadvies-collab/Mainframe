@@ -17,6 +17,7 @@ De vaste werkwijzen staan in `.claude/skills/<naam>/SKILL.md`. Past een taak bij
 - `nieuwe-skill` – nieuwe vaste werkwijze toevoegen
 - `mail-concepten` – alleen voor Claude (heeft de Outlook-koppeling); jij verstuurt nooit mail
 - `factuur` – factuur uit de weekstaten; gebruikt Excel via PowerShell-scripts in de skillmap
+- `3d-ontwerp` – 3D-ontwerp in de tuinontwerptool maken of aanpassen (zie `tools/tuinontwerp/LEESMIJ.md`)
 
 Pas skills, `context/` en `geheugen/` alleen aan als Joris daarom vraagt. Het zijn gedeelde bestanden.
 

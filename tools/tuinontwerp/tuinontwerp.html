@@ -76,6 +76,11 @@ h2:first-child { margin-top: 0; }
 #plan.teken { cursor: crosshair; }
 #plan.pan { cursor: grab; }
 #drie { position: absolute; inset: 0; width: 100%; height: 100%; display: block; background: #dfe8ee; } /* absoluut: het canvas mag de opmaak nooit groter maken */
+.lopenpad { position: absolute; right: 12px; bottom: 64px; display: grid; grid-template-columns: repeat(3, 44px); gap: 6px; z-index: 3; }
+.lopenpad[hidden] { display: none; }
+.lopenpad button { width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.92); font-size: 1.1rem; cursor: pointer; touch-action: none; user-select: none; }
+.lopenpad button:active { background: var(--accent-soft); }
+#knopLopen[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
 .paneelknoppen { position: absolute; top: 8px; left: 8px; display: flex; gap: 6px; flex-wrap: wrap; z-index: 2; }
 .paneelknoppen .knop { background: rgba(255,255,255,.92); }
 .status { position: absolute; bottom: 8px; left: 8px; right: 8px; font-size: 0.8rem; color: var(--muted); background: rgba(255,255,255,.9); border-radius: 7px; padding: 4px 8px; pointer-events: none; }
@@ -96,6 +101,8 @@ tr:nth-child(even) td { background: #EEF7E8; }
 .kaart { border: 1px solid var(--line); border-radius: 9px; padding: 10px; margin-bottom: 10px; }
 .kaart h3 { margin: 0 0 6px; font-size: 0.95rem; }
 .aanname { font-size: 0.75rem; color: #8a6a00; background: #fbefcf; border-radius: 6px; padding: 4px 7px; margin: 6px 0; }
+.chip { display: inline-flex; align-items: center; gap: 2px; background: var(--accent-soft); border-radius: 999px; padding: 2px 4px 2px 10px; font-size: 0.8rem; margin: 0 4px 4px 0; }
+.chip button { border: 0; background: none; cursor: pointer; color: var(--muted); font-size: 0.9rem; padding: 0 4px; }
 .tabs { display: flex; border-bottom: 1px solid var(--line); margin: -12px -12px 12px; }
 .tabs button { flex: 1 1 auto; border: 0; background: none; padding: 9px 2px; font-size: 0.76rem; font-weight: 600; color: var(--muted); border-bottom: 2.5px solid transparent; cursor: pointer; }
 .tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
@@ -127,7 +134,7 @@ body.klant .watermerk { display: flex; }
 <header>
   <div class="merk"><small>J.L. Post Groenadvies</small><b>Tuinontwerp</b></div>
   <input id="projectnaam" aria-label="Projectnaam" value="Nieuw ontwerp">
-  <span class="alleen-klant hint" style="margin:0">Schuif onderaan door de seizoenen en de jaren. Slepen = draaien, scrollen = zoomen.</span>
+  <span class="alleen-klant hint" style="margin:0">Schuif onderaan door de seizoenen en de jaren. Slepen = draaien, rechtermuisknop slepen of pijltjes = schuiven, scrollen = zoomen, Rondlopen = op ooghoogte door het ontwerp.</span>
   <div class="groep alleen-ontwerp">
     <button class="knop" id="knopNieuw">Nieuw</button>
     <button class="knop" id="knopOpen">Openen…</button>
@@ -172,14 +179,20 @@ body.klant .watermerk { display: flex; }
       <div class="paneel" id="paneelDrie">
         <canvas id="drie"></canvas>
         <div class="paneelknoppen">
+          <button class="knop klein" id="knopCentreer" title="Ontwerp weer in het midden en passend in beeld">Centreren</button>
           <button class="knop klein" data-camera="vogel">Vogelvlucht</button>
           <button class="knop klein" data-camera="boven">Bovenaanzicht</button>
           <button class="knop klein" data-camera="oog">Ooghoogte</button>
+          <button class="knop klein" id="knopLopen" aria-pressed="false" title="Op ooghoogte door het ontwerp lopen">Rondlopen</button>
           <button class="knop klein" id="knopBeeld">Beeld opslaan (PNG)</button>
           <button class="knop klein alleen-ontwerp" id="knopGlb" title="Voor later gebruik in Blender">3D-model (.glb)</button>
-          <span class="seg" role="group" aria-label="Weergave 3D"><button data-kwaliteit="maquette">Maquette</button><button data-kwaliteit="realistisch">Realistisch</button></span>
+          <span class="seg" role="group" aria-label="Weergave 3D"><button data-kwaliteit="maquette">Maquette</button><button data-kwaliteit="realistisch">Realistisch</button><button data-kwaliteit="schets" title="Presentatiestijl: lichte massa's, inktlijnen, zachte kleuren">Schets</button></span>
         </div>
         <div class="status" id="statusDrie"></div>
+        <div id="lopenPad" class="lopenpad" hidden>
+          <button data-loop="draaiLinks" title="Draai naar links">⟲</button><button data-loop="vooruit" title="Vooruit">▲</button><button data-loop="draaiRechts" title="Draai naar rechts">⟳</button>
+          <button data-loop="links" title="Stap naar links">◀</button><button data-loop="achteruit" title="Achteruit">▼</button><button data-loop="rechts" title="Stap naar rechts">▶</button>
+        </div>
         <div class="watermerk"><img alt="J.L. Post Groenadvies">3D-impressie</div>
       </div>
     </div>
@@ -202,7 +215,7 @@ body.klant .watermerk { display: flex; }
 <input type="file" id="bestandOpen" accept=".json,application/json" hidden>
 <input type="file" id="bestandBijlage" multiple accept=".pdf,image/*,.doc,.docx,.xls,.xlsx,.csv,.txt,.glb,.gltf" hidden>
 <input type="file" id="bestandModel" accept=".glb,.gltf,model/gltf-binary" hidden>
-<input type="file" id="bestandOndergrond" accept="image/*,.pdf,application/pdf" hidden>
+<input type="file" id="bestandOndergrond" accept="image/*,.pdf,application/pdf,.dxf" hidden>
 <div class="melding" id="melding"></div>
 
 <script type="module">
@@ -229,6 +242,9 @@ const VLAKTYPEN = {
   speelzand:      { naam: 'Speelzand / valondergrond', kleur: '#ead9a8', laag: 5, mat: 'zand',        voor: ['openbaar'] },
   tegels:         { naam: 'Betontegels 30x30',         kleur: '#b8b8b2', laag: 6, mat: 'tegels',      voor: ['openbaar', 'tuin'] },
   klinkers:       { naam: 'Klinkers',                  kleur: '#b0715a', laag: 6, mat: 'klinkers',    voor: ['openbaar', 'tuin'] },
+  dakvlak:        { naam: 'Dakvlak / ondergrond',      kleur: '#cfcbc4', laag: 0, mat: 'dak',         voor: ['tuin', 'openbaar'] },
+  plantenbak:     { naam: 'Plantenbak (verhoogd)',     kleur: '#a7c4a0', laag: 8, mat: 'plantenbak',  hoogte: 0.5, voor: ['tuin', 'openbaar'] },
+  zitelement:     { naam: 'Zitelement / bank',         kleur: '#b8865a', laag: 8, mat: 'vlonder',     hoogte: 0.45, voor: ['tuin', 'openbaar'] },
   siergrind:      { naam: 'Siergrind',                 kleur: '#d2d2cc', laag: 4, mat: 'siergrind',   voor: ['tuin', 'openbaar'] },
   zwembad:        { naam: 'Zwembad',                   kleur: '#6fc3e0', laag: 6, mat: 'zwembad',     voor: ['tuin'] },
   terras:         { naam: 'Terras (natuursteen)',      kleur: '#cfc8bb', laag: 6, mat: 'terras',      voor: ['tuin'] },
@@ -310,6 +326,7 @@ const BIBLIOTHEEK = {
 };
 
 // Legenda-instellingen per project (naam, kleur, 3D-weergave, hoogte) overschrijven de standaard van een vlaktype.
+const laagVan = v => v.laag ?? VLAKTYPEN[v.type]?.laag ?? 5; // stapelvolgorde; per vlak te overschrijven
 const WEERGAVEN = { standaard: 'Standaard', vlak: 'Plat vlak', beplanting: 'Struiken / heesters', haag: 'Haag (strak blok)' };
 function vt(type) {
   const basis = VLAKTYPEN[type] || VLAKTYPEN.onbekend, L = project?.legenda?.[type] || {};
@@ -415,8 +432,9 @@ function leegProject(soort) {
   return { versie: 1, naam: 'Nieuw ontwerp', soort, ondergrond: null, vlakken: [], objecten: [], bebouwing: [], soorten: {},
            instellingen: { hoogteBebouwing: 9, maand: 5, jaren: 5, uur: 14 } };
 }
-const soorten = () => ({ ...BIBLIOTHEEK, ...project.soorten });
-const soort = id => soorten()[id] || BIBLIOTHEEK.loofboom;
+let PLANTENLIJST = {}; // uit plantenlijst.json (gemaakt met bouw-plantenlijst.mjs uit de Excel in 09 bibliotheek)
+const soorten = () => ({ ...BIBLIOTHEEK, ...PLANTENLIJST, ...project.soorten });
+const soort = id => project.soorten?.[id] || PLANTENLIJST[id] || BIBLIOTHEEK[id] || BIBLIOTHEEK.loofboom;
 const inst = () => project.instellingen;
 
 function bewaarStap() {
@@ -551,7 +569,7 @@ function teken2D() {
   const h = 6 / zicht.s; // grootte van grepen in m
   $('lBebouwing').innerHTML = project.bebouwing.map(b =>
     `<path d="${pad(b.punten)}" fill="#7d7f80" fill-opacity=".85" data-soort="gebouw" data-id="${b.id}" ${selectie?.id === b.id ? 'stroke="#e0a000" stroke-width="3" vector-effect="non-scaling-stroke"' : ''}/>`).join('');
-  const vl = [...project.vlakken].sort((a, b) => (VLAKTYPEN[a.type]?.laag ?? 5) - (VLAKTYPEN[b.type]?.laag ?? 5));
+  const vl = [...project.vlakken].sort((a, b) => laagVan(a) - laagVan(b));
   $('lVlakken').innerHTML = vl.map(v => {
     const t = vt(v.type), sel = selectie?.id === v.id, inLegenda = legendaKeuze === v.type;
     return `<path d="${pad(vorm(v))}" fill="${t.kleur}" stroke="${sel || inLegenda ? '#e0a000' : 'rgba(0,0,0,.35)'}" stroke-width="${sel ? 3 : inLegenda ? 2 : 0.6}" vector-effect="non-scaling-stroke" data-soort="vlak" data-id="${v.id}"/>`;
@@ -720,6 +738,7 @@ function schaalInstellen(a, d) {
 // Ondergrond laden (foto/scan van een schets of een PDF)
 // =====================================================================
 async function laadOndergrond(bestand) {
+  if (/\.dxf$/i.test(bestand.name)) return startDxfImport(bestand.name, await bestand.text()); // CAD-tekening: direct omzetten naar vlakken
   let src, bPx, hPx, breedteM = null;
   if (/pdf$/i.test(bestand.type) || /\.pdf$/i.test(bestand.name)) {
     status('PDF wordt geladen…');
@@ -760,11 +779,43 @@ function soortOpties(categorieen, gekozen) {
     .map(([k, s]) => `<option value="${k}" ${k === gekozen ? 'selected' : ''}>${esc(s.naam)}</option>`).join('');
 }
 
+// ---------- soorten kiezen uit de plantenlijst ----------
+const CATEGORIE = { boom: ['boom'], heesters: ['heester'], vaste: ['vaste', 'gras'], struik: ['heester', 'vaste', 'gras'] };
+// zoekveld: typ een deel van de (wetenschappelijke of Nederlandse) naam en kies uit de lijst
+function soortZoeker(categorieen, attr, gekozen, placeholder = 'typ om te zoeken…') {
+  const lijstId = 'sl-' + categorieen.join('-');
+  const opties = Object.values(soorten()).filter(s => categorieen.includes(s.categorie)).map(s => `<option value="${esc(s.naam)}">`).join('');
+  return `<input ${attr} list="${lijstId}" value="${gekozen ? esc(soort(gekozen).naam) : ''}" placeholder="${placeholder}" autocomplete="off"><datalist id="${lijstId}">${opties}</datalist>`;
+}
+const soortVanNaam = naam => Object.entries(soorten()).find(([, s]) => s.naam === naam.trim())?.[0];
+const INFOVELDEN = ['Grootte-orde', 'Kroonvorm', 'Eindhoogte (m)', 'Kroonbreedte (m)', 'Eindhoogte (cm)', 'Eindbreedte (cm)', 'Hoogte (cm)', 'Hoogte incl. pluim (cm)', 'Breedte (cm)', 'Bloeikleur', 'Pluim-/bloeikleur', 'Bloeiperiode', 'Bladkleur', 'Herfstkleur', 'Wintergroen', 'Standplaats', 'Bodem', 'Verharding / stedelijk', 'Zouttolerantie', 'Inheems', 'Insecten', 'Vogels', 'Plantdichtheid (st/m²)', 'Gangbare aanplantmaat', 'Gangbare aanplantmaat (cm)', 'Toepassing', 'Opmerking', 'Beheer / opmerking'];
+function soortInfo(s) { // kenmerken uit de plantenlijst, inklapbaar
+  if (!s?.info) return s?.aanname ? `<p class="aanname">${esc(s.aanname)}</p>` : '';
+  const rijen = INFOVELDEN.filter(k => s.info[k]).map(k => `<tr><td>${esc(k)}</td><td>${esc(s.info[k])}</td></tr>`).join('');
+  return `<details style="margin-bottom:8px"><summary class="hint" style="cursor:pointer">Kenmerken uit je plantenlijst</summary><table>${rijen}</table></details>
+    <p class="hint">${esc(s.bron || '')} ${esc(s.afgeleid || '')}</p>`;
+}
+// plantdichtheid: zelf ingevuld, anders gemiddelde van de mix volgens de plantenlijst, anders 4 (aanname)
+function dichtheid(v) {
+  if (v.perM2) return v.perM2;
+  const w = (beplantingVan(v)?.ids || []).map(id => soort(id).perM2).filter(Boolean);
+  return w.length ? +(w.reduce((a, b) => a + b, 0) / w.length).toFixed(1) : 4;
+}
+const dichtheidBron = v => v.perM2 ? 'door jou ingevuld' : (beplantingVan(v)?.ids || []).some(id => soort(id).perM2) ? 'gemiddelde van de mix volgens je plantenlijst' : 'een aanname';
+let soortZoek = '';
+function soortLijst() {
+  const z = soortZoek.trim().toLowerCase();
+  if (z) return Object.entries(soorten()).filter(([, s]) => s.naam.toLowerCase().includes(z)).slice(0, 40);
+  const inGebruik = new Set([...project.objecten.map(o => o.soort), ...project.vlakken.flatMap(v => beplantingVan(v)?.ids || []), ...Object.keys(project.soorten || {})].filter(Boolean));
+  return [...inGebruik].map(id => [id, soort(id)]);
+}
+
 function tekenPanel() {
   const el = $('tabInhoud');
   if (tab === 'hoeveelheden') { el.innerHTML = hoeveelhedenHtml(); return; }
   if (tab === 'soorten') { el.innerHTML = soortenHtml(); return; }
   if (tab === 'bijlagen') { el.innerHTML = bijlagenHtml(); return; }
+  if (dxfImport) { el.innerHTML = dxfHtml(); return; }
   if (!selectie && legendaKeuze) { el.innerHTML = legendaHtml(legendaKeuze); return; }
   if (!selectie) { el.innerHTML = projectHtml(); return; }
   if (selectie.soort === 'vlak') {
@@ -776,11 +827,11 @@ function tekenPanel() {
       <label class="vink"><input type="checkbox" data-veld="vloeiend" ${v.vloeiend ? 'checked' : ''}> Vloeiende rand (ronde vormen met weinig punten)</label>
       ${t.hoogte ? `<label class="veld">Hoogte (m)<input type="number" step="0.05" min="0" data-veld="hoogte" value="${v.hoogte ?? t.hoogte}"></label>` : ''}
       ${t.beplanting === 'heesters' || t.beplanting === 'vaste' ? `
-        <label class="veld">Soorten in dit vlak (door elkaar)</label>
-        ${Object.entries(soorten()).filter(([, s]) => s.categorie === (t.beplanting === 'heesters' ? 'heester' : 'vaste')).map(([k, s]) =>
-          `<label class="vink"><input type="checkbox" data-soortmix="${k}" ${(v.soorten || []).includes(k) ? 'checked' : ''}> ${esc(s.naam)}</label>`).join('')}
-        <label class="veld">Planten per m²<input type="number" step="0.5" min="0.5" data-veld="perM2" value="${v.perM2 ?? 4}"></label>
-        <p class="aanname">Plantdichtheid ${v.perM2 ?? 4}/m² is ${v.perM2 ? 'door jou ingevuld' : 'een aanname'}; bepaalt het aantal planten in 3D en in de hoeveelheden.</p>` : ''}
+        <label class="veld">Soorten in dit vlak (door elkaar)${v.soorten?.length ? '' : ' – nu plaatshouders'}</label>
+        <div>${beplantingVan(v).ids.map(id => `<span class="chip">${esc(soort(id).naam)}<button data-mixweg="${id}" title="Uit de mix halen">✕</button></span>`).join('')}</div>
+        <label class="veld">Soort toevoegen${soortZoeker(CATEGORIE[t.beplanting], 'data-mixtoe', null)}</label>
+        <label class="veld">Planten per m²<input type="number" step="0.5" min="0.1" data-veld="perM2" value="${dichtheid(v)}"></label>
+        <p class="${v.perM2 || dichtheidBron(v) !== 'een aanname' ? 'hint' : 'aanname'}">Plantdichtheid ${fmt(dichtheid(v))}/m²: ${dichtheidBron(v)}. Bepaalt het aantal planten in 3D en in de hoeveelheden.</p>` : ''}
       ${bijlageKeuze('data-veld="bijlage"', v.bijlage)}
       <p class="hint">Hoekpunten slepen; witte bolletjes slepen voegt een punt toe; Alt+klik op een punt verwijdert het.</p>
       <button class="knop gevaar" data-actie="verwijder">Vlak verwijderen</button></div>`;
@@ -789,9 +840,9 @@ function tekenPanel() {
     const t = OBJECTTYPEN[o.type];
     const s = o.soort && soort(o.soort);
     el.innerHTML = `<div class="kaart"><h3>${t.naam}</h3>
-      ${o.soort ? `<label class="veld">Soort<select data-veld="soort">${soortOpties(o.type === 'boom' ? ['boom'] : ['heester', 'vaste'], o.soort)}</select></label>
+      ${o.soort ? `<label class="veld">Soort${soortZoeker(o.type === 'boom' ? CATEGORIE.boom : CATEGORIE.struik, 'data-soortkies="soort"', o.soort)}</label>
         <p class="hint">Nu (${inst().jaren >= 31 ? 'volgroeid' : inst().jaren + ' jaar na aanleg'}): ca. ${fmt(groei(s.hoogte, inst().jaren, s.jaren))} m hoog, kroon ${fmt(groei(s.breedte, inst().jaren, s.jaren))} m</p>
-        ${s.aanname ? `<p class="aanname">${esc(s.aanname)}</p>` : ''}` : ''}
+        ${soortInfo(s)}` : ''}
       <div class="rij"><label class="veld">X (m)<input type="number" step="0.1" data-veld="x" value="${o.x}"></label><label class="veld">Y (m)<input type="number" step="0.1" data-veld="y" value="${o.y}"></label></div>
       <label class="veld">Draaiing (graden)<input type="number" step="5" data-veld="rotatie" value="${o.rotatie || 0}"></label>
       ${o.type === 'model' ? `<p class="hint">${esc(o.modelNaam || '')}${o.lengte ? ` · ca. ${fmt(o.lengte * (o.schaal ?? 1), 2)} x ${fmt(o.breedte * (o.schaal ?? 1), 2)} x ${fmt((o.hoogteModel ?? 0) * (o.schaal ?? 1), 2)} m` : ''}</p>
@@ -852,12 +903,13 @@ function projectHtml() {
   const o = project.ondergrond;
   return `<div class="kaart"><h3>Project</h3>
     <label class="veld">Soort project<select data-project="soort"><option value="openbaar" ${project.soort === 'openbaar' ? 'selected' : ''}>Openbare ruimte</option><option value="tuin" ${project.soort === 'tuin' ? 'selected' : ''}>Particuliere tuin</option></select></label>
+    <label class="veld">Doorzichtigheid gebouwen in 3D<input type="range" min="0.1" max="1" step="0.05" data-gebouwdekking value="${inst().gebouwDekking ?? 1}"></label>
     <label class="veld">Hoogte omliggende bebouwing (m)<input type="number" step="0.5" min="0" data-project="hoogteBebouwing" value="${inst().hoogteBebouwing}"></label>
     ${project.bebouwing.length ? '<p class="aanname">Gebouwhoogte is een aanname tenzij je die per gebouw invult (klik op een gebouw).</p>' : ''}
   </div>
   <div class="kaart"><h3>Ondergrond</h3>
-    <p class="hint">Foto of scan van je schets, of een PDF op schaal. Fotografeer recht van boven.</p>
-    <button class="knop" data-actie="ondergrond">${o ? 'Andere ondergrond laden…' : 'Ondergrond laden…'}</button>
+    <p class="hint"><b>DXF (CAD-tekening)</b>: wordt automatisch omgezet naar vlakken, bomen en 3D. <b>Foto, scan of PDF</b>: komt als ondergrond in beeld om over te tekenen (recht van boven fotograferen).</p>
+    <button class="knop" data-actie="ondergrond">${o ? 'Andere tekening laden…' : 'Tekening laden (DXF, PDF of foto)…'}</button>
     ${o ? `<label class="vink" style="margin-top:8px"><input type="checkbox" data-ondergrond="zichtbaar" ${o.zichtbaar ? 'checked' : ''}> Tonen</label>
       <label class="veld">Doorzichtigheid<input type="range" min="0.1" max="1" step="0.05" data-ondergrond="dekking" value="${o.dekking ?? 0.5}"></label>
       <p class="hint">Afmeting: ${fmt(o.breedte)} x ${fmt(o.hoogte)} m. Klopt dat niet? Gebruik "Schaal instellen".</p>
@@ -871,7 +923,7 @@ function hoeveelheden() {
   const perType = {}, planten = {}, objecten = {};
   for (const v of project.vlakken) {
     const a = oppervlak(vorm(v)); perType[v.type] = (perType[v.type] || 0) + a;
-    if (v.soorten?.length) { const n = a * (v.perM2 ?? 4); v.soorten.forEach(s => planten[s] = (planten[s] || 0) + n / v.soorten.length); }
+    const bp = beplantingVan(v); if (bp && v.soorten?.length) { const n = a * dichtheid(v); bp.ids.forEach(s => planten[s] = (planten[s] || 0) + n / bp.ids.length); }
   }
   for (const o of project.objecten) { const k = o.soort ? `${OBJECTTYPEN[o.type].naam}: ${soort(o.soort).naam}` : OBJECTTYPEN[o.type].naam; objecten[k] = (objecten[k] || 0) + 1; }
   return { perType, planten, objecten };
@@ -889,8 +941,11 @@ function hoeveelhedenHtml() {
 function soortenHtml() {
   const kleur = (k, veld, v) => `<label class="veld">${veld === 'blad' ? 'Bladkleur' : veld === 'bloemkleur' ? 'Bloemkleur' : 'Herfstkleur'}<span class="kleurveld"><input type="color" data-soortveld="${k}.${veld}" value="${v}"></span></label>`;
   const maanden = (k, veld, r, label) => `<label class="veld">${label}<span class="rij"><select data-soortveld="${k}.${veld}.0">${MAANDEN.map((m, i) => `<option value="${i + 1}" ${r && r[0] === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select><select data-soortveld="${k}.${veld}.1">${MAANDEN.map((m, i) => `<option value="${i + 1}" ${r && r[1] === i + 1 ? 'selected' : ''}>${m}</option>`).join('')}</select></span></label>`;
-  return `<p class="hint">Soorten en hun eigenschappen bepalen de groei en het seizoensbeeld. Wijzigingen gelden voor dit project.</p>` +
-    Object.entries(soorten()).map(([k, s]) => `<details class="soortkaart"><summary>${esc(s.naam)}</summary>
+  const lijst = soortLijst();
+  return `<p class="hint">${Object.keys(PLANTENLIJST).length} soorten uit je plantenlijst (OneDrive › 09 bibliotheek). Maten en kleuren bepalen groei en seizoensbeeld in 3D. Wijzigingen gelden alleen voor dit project.</p>
+    <label class="veld">Zoeken (wetenschappelijke of Nederlandse naam)<input data-soortzoek value="${esc(soortZoek)}" placeholder="bijv. Spiraea, sierkers, Acer"></label>
+    <p class="hint">${soortZoek.trim() ? `${lijst.length} gevonden${lijst.length === 40 ? ' (eerste 40, typ verder om te verfijnen)' : ''}` : 'In dit ontwerp gebruikt:'}</p>` +
+    lijst.map(([k, s]) => `<details class="soortkaart"><summary>${esc(s.naam)}</summary>${soortInfo(s)}
       <label class="veld">Naam<input data-soortveld="${k}.naam" value="${esc(s.naam)}"></label>
       <div class="rij"><label class="veld">Hoogte aanplant (m)<input type="number" step="0.1" data-soortveld="${k}.hoogte.0" value="${s.hoogte[0]}"></label><label class="veld">Hoogte volwassen<input type="number" step="0.1" data-soortveld="${k}.hoogte.1" value="${s.hoogte[1]}"></label></div>
       <div class="rij"><label class="veld">Breedte aanplant (m)<input type="number" step="0.1" data-soortveld="${k}.breedte.0" value="${s.breedte[0]}"></label><label class="veld">Breedte volwassen<input type="number" step="0.1" data-soortveld="${k}.breedte.1" value="${s.breedte[1]}"></label></div>
@@ -898,16 +953,23 @@ function soortenHtml() {
       ${s.bloei ? maanden(k, 'bloei', s.bloei, 'Bloei van – tot') : ''}
       ${maanden(k, 'kaal', s.kaal, 'Kaal (bladloos) van – tot')}
       <div class="rij">${kleur(k, 'blad', s.blad)}${s.bloemkleur ? kleur(k, 'bloemkleur', s.bloemkleur) : ''}${kleur(k, 'herfstkleur', s.herfstkleur)}</div>
-      ${s.aanname ? `<p class="aanname">${esc(s.aanname)}</p>` : ''}
     </details>`).join('');
 }
 
 // invoer in de panelen
 $('tabInhoud').addEventListener('click', e => {
+  const weg = e.target.closest('[data-mixweg]');
+  if (weg && selectie?.soort === 'vlak') {
+    const v = project.vlakken.find(v => v.id === selectie.id); bewaarStap();
+    v.soorten = beplantingVan(v).ids.filter(s => s !== weg.dataset.mixweg); if (!v.soorten.length) delete v.soorten;
+    return gewijzigd();
+  }
   const a = e.target.closest('[data-actie]')?.dataset.actie; if (!a) return;
   if (a === 'verwijder') verwijderSelectie();
   const id = e.target.closest('[data-actie]').dataset.id;
   if (a === 'bijlageToevoegen') $('bestandBijlage').click();
+  if (a === 'dxfImporteren') dxfImporteren();
+  if (a === 'dxfAnnuleren') { dxfImport = null; tekenPanel(); }
   if (a === 'openBijlage') openBijlage(id);
   if (a === 'bijlagePlaatsen') bijlagePlaatsen(id);
   if (a === 'bijlageWeg') bijlageVerwijderen(id);
@@ -931,13 +993,27 @@ $('tabInhoud').addEventListener('change', e => {
 }, true);
 $('tabInhoud').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('[data-legenda-opdracht]')) voerLegendaOpdrachtUit(); });
 $('tabInhoud').addEventListener('input', e => {
+  if (e.target.dataset.soortzoek !== undefined) { // zoeken in de soorten: lijst verversen, focus houden
+    soortZoek = e.target.value; tekenPanel();
+    const z = document.querySelector('[data-soortzoek]'); z.focus(); z.setSelectionRange(z.value.length, z.value.length); return;
+  }
   const t = e.target, d = t.dataset;
+  if (d.gebouwdekking !== undefined) { inst().gebouwDekking = +t.value; drie.gebouwDekking(); autoBewaar(); return; }
   if (d.ondergrond) { project.ondergrond[d.ondergrond] = t.type === 'checkbox' ? t.checked : +t.value; tekenOndergrond(); autoBewaar(); }
 });
 $('tabInhoud').addEventListener('change', e => {
   const t = e.target, d = t.dataset;
   const waarde = t.type === 'checkbox' ? t.checked : t.type === 'number' ? (t.value === '' ? null : +t.value) : t.value;
-  if (d.ondergrond || d.legendaOpdracht !== undefined || d.bijlageNotitie) return;
+  if (d.dxflaag !== undefined) { dxfImport.keuze[d.dxflaag] = t.value; return; }
+  if (d.gebouwdekking !== undefined) return;
+  if (d.ondergrond || d.legendaOpdracht !== undefined || d.bijlageNotitie || d.soortzoek !== undefined) return;
+  if (d.soortkies !== undefined || d.mixtoe !== undefined) {
+    const id = soortVanNaam(t.value); if (!id) { melding('Soort niet gevonden: kies een naam uit de lijst'); return; }
+    bewaarStap();
+    if (d.mixtoe !== undefined) { const v = project.vlakken.find(v => v.id === selectie.id); v.soorten = [...new Set([...(v.soorten || []), id])]; }
+    else project.objecten.find(o => o.id === selectie.id)[d.soortkies] = id;
+    return gewijzigd();
+  }
   if (d.legenda === 'tegelL' || d.legenda === 'tegelB') {
     const huidig = [...(vt(legendaKeuze).L.tegel || TEGELMAAT[VLAKTYPEN[legendaKeuze].mat])];
     huidig[d.legenda === 'tegelL' ? 0 : 1] = (waarde || 30) / 100;
@@ -959,7 +1035,7 @@ $('tabInhoud').addEventListener('change', e => {
     const [k, veld, i] = d.soortveld.split('.');
     const s = project.soorten[k] = structuredClone(soort(k));
     const w = t.type === 'number' || t.tagName === 'SELECT' && i !== undefined ? +t.value : t.value;
-    if (i !== undefined) s[veld][+i] = w; else s[veld] = w;
+    if (i !== undefined) { s[veld] ??= [w, w]; s[veld][+i] = w; } else s[veld] = w;
     if (s.aanname && !/aangepast/.test(s.aanname)) s.aanname += ' (Deels aangepast in dit project.)';
     teken2D(); plan3D(); autoBewaar(); return; // panel niet hertekenen: open uitklapper blijft open
   }
@@ -998,6 +1074,8 @@ const drie = (() => {
   camera.position.set(-20, 25, 30);
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping = false; controls.maxPolarAngle = Math.PI * 0.495;
+  controls.screenSpacePanning = false; controls.keyPanSpeed = 25; controls.listenToKeyEvents(window); // pijltjes = schuiven over de grond
+  controls.zoomToCursor = false; // draaien en zoomen blijven rond het midden van het ontwerp
   controls.addEventListener('change', () => render());
   const hemi = new THREE.HemisphereLight('#eaf3ff', '#7d7360', 1.1); scene.add(hemi);
   const zonlicht = new THREE.DirectionalLight('#fff4e0', 2.4);
@@ -1016,7 +1094,8 @@ const drie = (() => {
   // =================== realistische weergave ===================
   const kwaliteit = () => inst().kwaliteit || 'realistisch';
   let echtMislukt = false;
-  const echt = () => kwaliteit() === 'realistisch' && !echtMislukt;
+  const echt = () => (kwaliteit() === 'realistisch' || kwaliteit() === 'schets') && !echtMislukt;
+  const schets = () => kwaliteit() === 'schets' && !echtMislukt;
 
   // lucht (fysisch model, volgt de zon) en omgevingslicht daaruit
   const lucht = new Sky(); lucht.scale.setScalar(900); lucht.userData.alfa = true;
@@ -1028,13 +1107,18 @@ const drie = (() => {
   function zetLucht(richting) {
     lu.sunPosition.value.copy(richting);
     if (!echt()) return;
+    const zichtbaar = !!lucht.parent;
     scene.remove(lucht); luchtScene.add(lucht);
     omgevingRT?.dispose(); omgevingRT = pmrem.fromScene(luchtScene, 0, 0.1, 1000);
-    luchtScene.remove(lucht); scene.add(lucht);
+    luchtScene.remove(lucht); if (zichtbaar || !schets()) scene.add(lucht);
     scene.environment = omgevingRT.texture;
   }
   function zetModusScene() {
-    if (echt()) {
+    if (schets()) { // papierachtige presentatie
+      scene.remove(lucht); scene.environment = omgevingRT?.texture ?? null; scene.environmentIntensity = 0.35;
+      scene.background = new THREE.Color('#f6f5f0'); scene.fog = new THREE.Fog('#f6f5f0', 140, 520);
+      hemi.intensity = 1.0; renderer.toneMappingExposure = 1.0;
+    } else if (echt()) {
       if (!lucht.parent) scene.add(lucht);
       scene.background = null; scene.fog = new THREE.Fog('#cfdbe4', 160, 650);
       hemi.intensity = 0.25; scene.environmentIntensity = 0.55;
@@ -1170,6 +1254,8 @@ const drie = (() => {
       case 'aarde': return metVariatie(foto('aarde', 1.6), 0.15, 0.25);
       case 'aarde_licht': return metVariatie(foto('aarde', 1.6, { color: '#c9b79a' }), 0.15, 0.25);
       case 'schors': return metVariatie(foto('houtsnippers', 1.4, { color: '#a8865f' }), 0.15, 0.3);
+      case 'dak': return metVariatie(foto('grind', 1.2, { color: k3 || '#9c9a95' }), 0.08, 0.2);
+      case 'plantenbak': return [foto('aarde', 1.2), new THREE.MeshStandardMaterial({ color: k3 || '#3a3a38', roughness: 0.55, metalness: 0.4 })]; // bovenkant aarde, wanden staal
       case 'zwembad': return new THREE.MeshPhysicalMaterial({ color: '#1f8fb8', roughness: 0.02, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 1.6, normalMap: fotoTex('zand', 'normaal', 3), normalScale: new THREE.Vector2(0.15, 0.15) });
       case 'tegels': return new THREE.MeshStandardMaterial({ map: tegelTex(tegel, k3 || '#d6d3cb', L.verband, !!k3), normalMap: fotoTex('beton', 'normaal', 1.2), roughness: 0.9 });
       case 'terras': return new THREE.MeshStandardMaterial({ map: tegelTex(tegel, k3 || '#e2d6c0', L.verband, !!k3), normalMap: fotoTex('beton', 'normaal', 1.2), roughness: 0.85 });
@@ -1332,8 +1418,8 @@ const drie = (() => {
   const bloemGeo = new THREE.IcosahedronGeometry(0.03, 0).scale(1, 0.5, 1);
   // punten binnen een vlak, maar niet onder hoger liggende vlakken
   function strooi(v, perM2, maxN, zaad) {
-    const punten = vorm(v), r = rng(zaad + v.id), laag = VLAKTYPEN[v.type]?.laag ?? 1;
-    const hoger = project.vlakken.filter(w => w !== v && (VLAKTYPEN[w.type]?.laag ?? 1) > laag).map(vorm);
+    const punten = vorm(v), r = rng(zaad + v.id), laag = laagVan(v);
+    const hoger = project.vlakken.filter(w => w !== v && laagVan(w) > laag).map(vorm);
     const xs = punten.map(p => p[0]), ys = punten.map(p => p[1]);
     const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
     const n = Math.min(maxN, Math.round((x1 - x0) * (y1 - y0) * perM2)), uit = [];
@@ -1363,15 +1449,17 @@ const drie = (() => {
   }
   // vaste hoogte (uit de legenda) gaat voor de groei volgens de soort
   const plantMaat = (s, jaar, vast, f) => vast ? { h: vast * f, b: Math.max(0.6, vast * 1.2) * f } : { h: groei(s.hoogte, jaar, s.jaren) * f, b: groei(s.breedte, jaar, s.jaren) * f };
-  const plantAfstand = (v, vast) => v.perM2 ? 1 / Math.sqrt(v.perM2) : vast ? Math.max(0.45, vast * 0.55) : 0.5; // vaste hoogte: dicht gesloten massa
+  const plantAfstand = (v, vast) => vast && !v.perM2 ? Math.max(0.45, vast * 0.55) : 1 / Math.sqrt(dichtheid(v)); // vaste hoogte: dicht gesloten massa
   function echteBeplanting(v, t, m, jaar, doel) {
     if (t.beplanting === 'bloemen') return weide(v, m, doel);
     const bp = beplantingVan(v), punten = vorm(v), r = rng(v.id), ids = bp.ids;
+    const hoger = project.vlakken.filter(w => w !== v && laagVan(w) > laagVan(v) && !VLAKTYPEN[w.type]?.beplanting).map(vorm);
     const xs = punten.map(p => p[0]), ys = punten.map(p => p[1]);
     const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
     const afst = plantAfstand(v, bp.h), lijst = [];
     for (let y = y0 + afst / 2; y < y1; y += afst) for (let x = x0 + afst / 2; x < x1; x += afst) {
       const p = [x + (r() - 0.5) * afst * 0.6, y + (r() - 0.5) * afst * 0.6]; if (!binnen(p, punten)) continue;
+      if (hoger.some(h => binnen(p, h))) continue;
       const id = ids[Math.floor(r() * ids.length)], s = soort(id), f = 0.85 + r() * 0.3;
       const pm = plantMaat(s, jaar, bp.h, f);
       lijst.push({ id, variant: Math.floor(r() * 3), x: p[0], y: p[1], draai: r() * 6.3, h: pm.h, b: pm.b * 1.15 });
@@ -1439,6 +1527,8 @@ const drie = (() => {
       case 'vlonder': return std({ map: textuur('vlonder', 0.6, (g, n) => { ruis(g, n, '#b88a5a', 0.25, 5000, 2); g.strokeStyle = '#7c5935'; g.lineWidth = 3; for (let x = 0; x <= n; x += n / 4) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, n); g.stroke(); } }) });
       case 'water': return std({ color: '#5f93b5', roughness: 0.15, metalness: 0.1 });
       case 'zwembad': return std({ color: '#5fb8d8', roughness: 0.1 });
+      case 'dak': return std({ color: '#b8b5ae' });
+      case 'plantenbak': return [std({ color: '#6a5040' }), std({ color: '#4a4a48' })];
       case 'siergrind': return std({ map: textuur('siergrind', 1.2, (g, n) => ruis(g, n, '#d2d2cc', 0.35, 12000, 2)) });
       case 'haag': return std({ color: inMaanden(m, [12, 2]) ? '#4c6b35' : '#3f7a2e', flatShading: true });
       case 'hout_donker': return std({ color: '#6d5643' });
@@ -1783,7 +1873,7 @@ const drie = (() => {
   async function bouw() {
     const nr = ++bouwNr;
     await laadModellen(); if (nr !== bouwNr) return;
-    if (kwaliteit() === 'realistisch' && !echtMislukt) {
+    if (echt()) {
       $('statusDrie').textContent = 'Realistische weergave wordt opgebouwd…';
       try { await voorbereiden(); }
       catch (e) { console.error(e); echtMislukt = true; toonFout('Realistische weergave kon niet laden (' + e.message + '). De maquette wordt getoond.'); }
@@ -1804,7 +1894,7 @@ const drie = (() => {
     weg.push(...gebMat);
     for (const b of project.bebouwing) { const mesh = new THREE.Mesh(vlakGeometrie(b.punten, b.hoogte ?? inst().hoogteBebouwing), ech ? gebMat : gebMat[0]); mesh.castShadow = mesh.receiveShadow = true; mesh.userData.gebouw = true; inhoud.add(mesh); }
     // vlakken, in stapelvolgorde
-    const vl = [...project.vlakken].sort((a, b) => (VLAKTYPEN[a.type]?.laag ?? 5) - (VLAKTYPEN[b.type]?.laag ?? 5));
+    const vl = [...project.vlakken].sort((a, b) => laagVan(a) - laagVan(b));
     vl.forEach((v, i) => {
       const t = vt(v.type), punten = vorm(v), weergave = t.L.weergave || 'standaard';
       if (punten.length < 3) return;
@@ -1813,28 +1903,64 @@ const drie = (() => {
       if (weergave === 'vlak') hoogte = 0;
       if (weergave === 'beplanting' && !t.beplanting && !t.hoogte) matNaam = 'schors';
       const plantVlak = !!beplantingVan(v) || t.beplanting === 'bloemen';
-      const mat = ech ? echtMateriaal(matNaam, m, t.L) : materiaal(matNaam, m); weg.push(mat);
+      const mat = ech ? echtMateriaal(matNaam, m, t.L) : materiaal(matNaam, m); weg.push(...[mat].flat());
+      const voorNiveau = inhoud.children.length, niv = v.type === 'plantenbak' ? 0 : niveauOp(gemiddelde(punten, 0), gemiddelde(punten, 1));
       if (!ech && t.L.kleur3d && VERHARDING.includes(matNaam)) mat.color.set(t.L.kleur3d);
-      if (!hoogte) { mat.polygonOffset = true; mat.polygonOffsetFactor = -1 - (t.laag ?? 1); mat.polygonOffsetUnits = -4 * (t.laag ?? 1); }
-      const mesh = new THREE.Mesh(vlakGeometrie(punten, hoogte), mat);
-      mesh.position.y = hoogte ? 0 : 0.002 * (t.laag ?? 1) + 0.0001 * i; mesh.receiveShadow = true; mesh.castShadow = !!hoogte;
+      const lg = laagVan(v); if (!hoogte) { [mat].flat().forEach(mm => { mm.polygonOffset = true; mm.polygonOffsetFactor = -1 - lg; mm.polygonOffsetUnits = -4 * lg; }); }
+      const mesh = new THREE.Mesh(vlakGeometrie(punten, hoogte), mat); mesh.userData.planKleur = t.L.kleur3d || t.kleur;
+      mesh.position.y = hoogte ? 0 : 0.002 * lg + 0.0001 * i; mesh.receiveShadow = true; mesh.castShadow = !!hoogte;
       inhoud.add(mesh);
       if (plantVlak) ech ? echteBeplanting(v, t, m, jaar, inhoud) : beplanting(v, t, m, jaar);
       if (ech && (matNaam === 'gras' || matNaam === 'gras_donker')) gras(v, m, inhoud, matNaam === 'gras' ? 0.045 : 0.08, matNaam === 'gras' ? 90 : 60);
       if (ech && matNaam === 'aarde') moestuinGewas(v, m, inhoud);
       if (ech && matNaam === 'haag' && hoogte > 0) haagBlad(v, punten, hoogte, m, inhoud);
       if (matNaam === 'zwembad') zwembadRand(punten, ech);
+      if (niv) for (const c of inhoud.children.slice(voorNiveau)) c.position.y += niv; // vlak ligt in een verhoogde plantenbak
     });
-    for (const o of project.objecten) inhoud.add(object(o, m, jaar));
+    for (const o of project.objecten) { const g = object(o, m, jaar); if (o.type !== 'plantenbak') g.position.y += niveauOp(o.x, o.y); inhoud.add(g); }
     // midden en omvang voor camera en schaduw
     const g = grenzen();
     midden.set((g.x0 + g.x1) / 2, 0, -(g.y0 + g.y1) / 2);
     straal = Math.max(8, Math.hypot(g.x1 - g.x0, g.y1 - g.y0) / 2);
+    if (schets()) schetsStijl();
+    gebouwDekking();
     zon();
     if (startCamera) { camera_(startCamera); startCamera = null; }
     render(); setTimeout(render, 600); setTimeout(render, 2000); // texturen laden na
   }
 
+  // Schets: lichte massa's in plattegrondkleur (pastel), inktlijnen, uitgewassen groen
+  const inkt = new THREE.LineBasicMaterial({ color: '#3b3a36' });
+  function schetsStijl() {
+    grond.material = new THREE.MeshStandardMaterial({ color: '#f1efe8', roughness: 1 }); weg.push(grond.material);
+    const lijnen = [];
+    inhoud.traverse(o => {
+      if (!o.isMesh) return;
+      const mats = [o.material].flat(), blad = o.userData.alfa || mats.some(m => m.alphaTest > 0);
+      if (blad) { // bladeren, gras, bloemen: lichter en zachter, zoals waterverf
+        for (const m of mats) { if (m.emissive) { m.emissive.set('#ffffff'); m.emissiveIntensity = 0.16; } m.roughness = 1; }
+        return;
+      }
+      const basis = o.userData.planKleur ? mix(o.userData.planKleur, '#ffffff', 0.45) : mix('#' + (mats[0].color?.getHexString?.() || 'dddddd'), '#ffffff', 0.55);
+      const nieuw = mats.map(() => { const m = new THREE.MeshStandardMaterial({ color: basis, roughness: 1, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }); weg.push(m); return m; });
+      o.material = Array.isArray(o.material) ? nieuw : nieuw[0];
+      const g = o.geometry, n = g.index ? g.index.count : g.attributes.position.count;
+      if (o.isInstancedMesh || n > 6000) return; // te veel lijntjes: alleen massa
+      const e = new THREE.EdgesGeometry(g, 35); weg.push(e);
+      lijnen.push([o, e]);
+    });
+    for (const [o, e] of lijnen) { const l = new THREE.LineSegments(e, inkt); l.renderOrder = 1; o.add(l); }
+  }
+  // bestaande gebouwen deels doorzichtig (instelling in het projectpaneel)
+  function gebouwDekking() {
+    const dekking = inst().gebouwDekking ?? 1;
+    for (const c of inhoud.children) if (c.userData.gebouw) {
+      for (const m of [c.material].flat()) { m.transparent = dekking < 1; m.opacity = dekking; m.depthWrite = dekking >= 1; m.needsUpdate = true; }
+      c.castShadow = dekking > 0.5; c.renderOrder = 2;
+      for (const l of c.children) if (l.isLineSegments) { l.material = l.material === inkt ? inkt.clone() : l.material; l.material.transparent = true; l.material.opacity = Math.max(0.25, dekking); }
+    }
+    render();
+  }
   function zon() {
     const { maand: m, uur } = inst(), lat = 52.1 * Math.PI / 180;
     const dag = [15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349][m - 1];
@@ -1869,10 +1995,126 @@ const drie = (() => {
     }
     return new THREE.Vector3(midden.x - afstand * 0.7, hoogte, midden.z + afstand * 0.7);
   }
+  // =================== rondlopen op ooghoogte ===================
+  const OOG = 1.6;
+  let lopen = false, yaw = 0, pitch = 0, lus = false, vorigeTijd = 0, tocht = null;
+  const toetsen = new Set();
+  const vooruit = () => new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+  const rechts = () => new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+  function richtCamera() { camera.rotation.set(pitch, yaw, 0, 'YXZ'); }
+  // niet door gebouwen, hagen, schuttingen of plantenbakken lopen
+  function geblokkeerd(x, z) {
+    const p = [x, -z];
+    if (project.bebouwing.some(b => binnen(p, b.punten))) return true;
+    if (project.objecten.some(o => o.type === 'boom' && Math.hypot(o.x - p[0], o.y - p[1]) < 0.4)) return true; // boomstam
+    const BLOK = ['haag', 'schutting', 'plantenbak', 'zitelement', 'sierbeplanting', 'border', 'water', 'zwembad'];
+    if (project.vlakken.some(v => (BLOK.includes(v.type) || ['haag', 'beplanting'].includes(vt(v.type).L.weergave)) && binnen(p, vorm(v)))) return true;
+    const begaanbaar = project.vlakken.filter(v => v.type !== 'dakvlak');
+    return begaanbaar.length > 0 && !begaanbaar.some(v => binnen(p, vorm(v))) && !project.vlakken.some(v => v.type === 'dakvlak' && binnen(p, vorm(v))); // niet buiten het ontwerp
+  }
+  function vrijeLoopplek() { // rand van het ontwerp, binnen een vlak, niet geblokkeerd, met zicht op het midden
+    const doel = new THREE.Vector3(midden.x, OOG, midden.z);
+    for (const f of [0.6, 0.45, 0.3, 0.8, 0.15]) for (let g = 0; g < 360; g += 30) {
+      const a = (225 + g) * Math.PI / 180, x = midden.x + Math.sin(a) * straal * f, z = midden.z - Math.cos(a) * straal * f;
+      if (geblokkeerd(x, z) || !project.vlakken.some(v => binnen([x, -z], vorm(v)))) continue;
+      if (vrijZicht(new THREE.Vector3(x, OOG, z), doel)) return { x, z };
+    }
+    return { x: midden.x, z: midden.z };
+  }
+  function startLopen() {
+    if (lopen) return;
+    lopen = true; controls.enabled = false;
+    const d = new THREE.Vector3(); camera.getWorldDirection(d);
+    yaw = Math.atan2(-d.x, -d.z); pitch = 0;
+    if (camera.position.y > OOG + 0.5) { // van bovenaf: begin aan de rand van het ontwerp, kijkend naar het midden
+      const v = vrijeLoopplek();
+      camera.position.set(v.x, OOG, v.z);
+      yaw = Math.atan2(-(midden.x - v.x), -(midden.z - v.z));
+    } else camera.position.y = OOG;
+    richtCamera(); $('lopenPad').hidden = false; $('knopLopen').setAttribute('aria-pressed', 'true');
+    $('statusDrie').textContent = 'Rondlopen: W/S of ↑/↓ = lopen · A/D = opzij · slepen of ←/→ = rondkijken · dubbelklik = daarheen · Shift = sneller · Esc = stoppen';
+    render();
+  }
+  function stopLopen() {
+    if (!lopen) return;
+    lopen = false; toetsen.clear(); tocht = null;
+    controls.target.copy(camera.position).addScaledVector(vooruit(), 4).setY(1.2); controls.enabled = true; controls.update();
+    $('lopenPad').hidden = true; $('knopLopen').setAttribute('aria-pressed', 'false'); $('statusDrie').textContent = ''; render();
+  }
+  function beweeg(tijd, stil = false) {
+    if (!lopen) { lus = false; return; }
+    const dt = Math.min(0.05, (tijd - vorigeTijd) / 1000 || 0); vorigeTijd = tijd;
+    const snel = toetsen.has('shift') ? 4 : 1.4, stap = new THREE.Vector3();
+    if (toetsen.has('vooruit')) stap.add(vooruit()); if (toetsen.has('achteruit')) stap.sub(vooruit());
+    if (toetsen.has('rechts')) stap.add(rechts()); if (toetsen.has('links')) stap.sub(rechts());
+    if (toetsen.has('draaiLinks')) yaw += 1.6 * dt; if (toetsen.has('draaiRechts')) yaw -= 1.6 * dt;
+    if (tocht) { // naar een aangeklikte plek lopen
+      const naar = new THREE.Vector3(tocht.x - camera.position.x, 0, tocht.z - camera.position.z), afstand = naar.length();
+      if (afstand < 0.1) tocht = null; else stap.add(naar.normalize().multiplyScalar(Math.min(1, afstand)));
+    }
+    if (stap.lengthSq()) {
+      stap.normalize().multiplyScalar(snel * dt * (tocht && !toetsen.size ? 2 : 1));
+      const nx = camera.position.x + stap.x, nz = camera.position.z + stap.z;
+      if (!geblokkeerd(nx, nz) || geblokkeerd(camera.position.x, camera.position.z)) camera.position.set(nx, OOG, nz); else tocht = null;
+    }
+    richtCamera(); if (stil) return; tekenNu();
+    if (toetsen.size || tocht) requestAnimationFrame(beweeg); else lus = false;
+  }
+  function startLus() { if (!lus) { lus = true; vorigeTijd = performance.now(); requestAnimationFrame(beweeg); } }
+  const TOETS = { w: 'vooruit', arrowup: 'vooruit', s: 'achteruit', arrowdown: 'achteruit', a: 'links', d: 'rechts', arrowleft: 'draaiLinks', arrowright: 'draaiRechts', shift: 'shift' };
+  document.addEventListener('keydown', e => {
+    if (!lopen || e.target.matches?.('input, select, textarea')) return;
+    if (e.key === 'Escape') { stopLopen(); e.stopImmediatePropagation(); return; }
+    const k = TOETS[e.key.toLowerCase()]; if (!k) return;
+    e.preventDefault(); e.stopImmediatePropagation(); toetsen.add(k); if (k !== 'shift') startLus();
+  }, true);
+  document.addEventListener('keyup', e => { const k = TOETS[e.key.toLowerCase()]; if (k) toetsen.delete(k); }, true);
+  window.addEventListener('blur', () => toetsen.clear());
+  // rondkijken met slepen, dubbelklik = daarheen lopen, scrollen = stapje
+  let kijk = null;
+  canvas.addEventListener('pointerdown', e => { if (!lopen) return; kijk = { x: e.clientX, y: e.clientY }; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointermove', e => {
+    if (!lopen || !kijk) return;
+    yaw -= (e.clientX - kijk.x) * 0.004; pitch = Math.max(-1.2, Math.min(1.2, pitch - (e.clientY - kijk.y) * 0.004));
+    kijk = { x: e.clientX, y: e.clientY }; richtCamera(); render();
+  });
+  canvas.addEventListener('pointerup', () => { kijk = null; });
+  canvas.addEventListener('dblclick', e => {
+    if (!lopen) return;
+    const r = canvas.getBoundingClientRect(), muis = new THREE.Vector2((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    const straalZ = new THREE.Raycaster(); straalZ.setFromCamera(muis, camera);
+    const raak = straalZ.intersectObjects([grond, ...inhoud.children], true)[0];
+    if (raak) { tocht = { x: raak.point.x, z: raak.point.z }; startLus(); }
+  });
+  canvas.addEventListener('wheel', e => {
+    if (!lopen) return; e.preventDefault();
+    const s = vooruit().multiplyScalar(-Math.sign(e.deltaY) * 0.5), nx = camera.position.x + s.x, nz = camera.position.z + s.z;
+    if (!geblokkeerd(nx, nz) || geblokkeerd(camera.position.x, camera.position.z)) { camera.position.set(nx, OOG, nz); render(); }
+  }, { passive: false });
+  // pijlknoppen in beeld (ingedrukt houden)
+  document.querySelectorAll('[data-loop]').forEach(b => {
+    const aan = e => { e.preventDefault(); toetsen.add(b.dataset.loop); startLus(); }, uit = () => toetsen.delete(b.dataset.loop);
+    b.addEventListener('pointerdown', aan); b.addEventListener('pointerup', uit); b.addEventListener('pointerleave', uit); b.addEventListener('pointercancel', uit);
+  });
+
+  function passendeAfstand() {
+    const g = grenzen(), bol = Math.hypot(g.x1 - g.x0, g.y1 - g.y0, 3) / 2;
+    const vfov = camera.fov * Math.PI / 180, hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
+    return bol / Math.sin(Math.min(vfov, hfov) / 2) * 0.8;
+  }
+  // ontwerp terug in het midden, kijkrichting blijft gelijk
+  function centreer() {
+    stopLopen();
+    const r = camera.position.clone().sub(controls.target); if (r.lengthSq() < 0.01) r.set(-1, 1, 1);
+    controls.target.set(midden.x, 0, midden.z);
+    camera.position.copy(controls.target).addScaledVector(r.normalize(), passendeAfstand());
+    controls.update(); render();
+  }
   function camera_(soort) {
+    stopLopen();
     const R = straal, doel = new THREE.Vector3(midden.x, soort === 'oog' ? 1.2 : 0, midden.z);
-    if (soort === 'vogel') camera.position.copy(vrijePlek(R * 1.05, R * 1.55, doel));
-    if (soort === 'boven') camera.position.set(midden.x, R * 2.6, midden.z + 0.01);
+    if (soort === 'vogel') { const p = vrijePlek(R * 1.05, R * 1.55, doel), r = p.sub(doel).normalize(); camera.position.copy(doel).addScaledVector(r, passendeAfstand()); }
+    if (soort === 'boven') camera.position.set(midden.x, passendeAfstand(), midden.z + 0.01);
     if (soort === 'oog') camera.position.copy(vrijePlek(R * 0.75, 1.6, doel, true));
     if (/^-?[\d.]+(,-?[\d.]+){5}$/.test(soort)) { const c = soort.split(',').map(Number); camera.position.set(c[0], c[2], -c[1]); doel.set(c[3], c[5], -c[4]); } // test: x,y,hoogte,doelx,doely,doelhoogte
     controls.target.copy(doel);
@@ -1930,7 +2172,8 @@ const drie = (() => {
   }
   grondEcht = new THREE.MeshStandardMaterial({ map: textuur('straat', 2, (g, n) => ruis(g, n, '#c2bfb8', 0.1, 9000, 1)), roughness: 0.95 });
   const pngVoorbeeld = () => { tekenNu(); return metWatermerk(canvas).toDataURL('image/jpeg', 0.8); }; // voor testen
-  return { bouw, zon, render, camera: camera_, glb, png, pngVoorbeeld, renderer, zetStartCamera: c => { startCamera = c; } };
+  const testLopen = n => { toetsen.add('vooruit'); for (let i = 0; i < n; i++) beweeg(vorigeTijd + 50, true); toetsen.delete('vooruit'); render(); }; // voor testen
+  return { bouw, zon, render, gebouwDekking, camera: camera_, centreer, startLopen, stopLopen, isLopen: () => lopen, testLopen, glb, png, pngVoorbeeld, renderer, zetStartCamera: c => { startCamera = c; } };
 })();
 
 let planTimer;
@@ -1941,6 +2184,8 @@ function plan3D() {
 function zetKwaliteitKnoppen() { document.querySelectorAll('[data-kwaliteit]').forEach(b => b.setAttribute('aria-pressed', b.dataset.kwaliteit === (inst().kwaliteit || 'realistisch'))); }
 document.querySelectorAll('[data-kwaliteit]').forEach(b => b.addEventListener('click', () => { inst().kwaliteit = b.dataset.kwaliteit; zetKwaliteitKnoppen(); plan3D(); autoBewaar(); }));
 document.querySelectorAll('[data-camera]').forEach(b => b.addEventListener('click', () => drie.camera(b.dataset.camera)));
+$('knopCentreer').addEventListener('click', () => drie.centreer());
+$('knopLopen').addEventListener('click', () => drie.isLopen() ? drie.stopLopen() : drie.startLopen());
 $('knopBeeld').addEventListener('click', () => drie.png());
 $('knopGlb').addEventListener('click', () => drie.glb().catch(e => melding('Export mislukt: ' + e.message)));
 
@@ -2037,6 +2282,115 @@ $('bestandBijlage').addEventListener('change', async e => {
 });
 
 // =====================================================================
+// DXF-tekening (CAD) inlezen: lagen → vlaktypen en bomen
+// =====================================================================
+let dxfImport = null; // { naam, lagen, keuze } zolang de importkaart open staat
+const gemiddelde = (p, i) => p.reduce((s, q) => s + q[i], 0) / p.length;
+const zelfdeVorm = (a, b) => Math.abs(oppervlak(a) - oppervlak(b)) < 0.02 * Math.max(oppervlak(a), 0.01) && Math.hypot(gemiddelde(a, 0) - gemiddelde(b, 0), gemiddelde(a, 1) - gemiddelde(b, 1)) < 0.05;
+function leesDxf(tekst) {
+  const r = tekst.split(/\r?\n/), p = [];
+  for (let i = 0; i + 1 < r.length; i += 2) p.push([parseInt(r[i], 10), r[i + 1].trim()]);
+  const iu = p.findIndex(([c, v]) => c === 9 && v === '$INSUNITS');
+  const eenheid = iu >= 0 ? ({ 1: 0.0254, 2: 0.3048, 4: 0.001, 5: 0.01, 6: 1 }[+p[iu + 1][1]] ?? 1) : 1;
+  let i = p.findIndex(([c, v]) => c === 2 && v === 'ENTITIES'); if (i < 0) throw new Error('geen tekeninggegevens (ENTITIES) gevonden');
+  const ents = []; let cur = null;
+  for (i++; i < p.length; i++) { const [c, v] = p[i]; if (c === 0) { if (cur) ents.push(cur); if (v === 'ENDSEC') break; cur = { type: v, codes: [] }; } else if (cur) cur.codes.push([c, v]); }
+  const lagen = {}, laag = n => lagen[n] ??= { naam: n, vormen: [], cirkels: [], overig: 0 }, m = v => +v * eenheid;
+  for (const e of ents) {
+    const L = laag(e.codes.find(x => x[0] === 8)?.[1] || '0'), c = e.codes;
+    if (e.type === 'LWPOLYLINE') {
+      const pts = []; let x = null;
+      for (const [k, v] of c) { if (k === 10) x = m(v); else if (k === 20 && x !== null) { pts.push([x, m(v)]); x = null; } }
+      const dicht = (+(c.find(x => x[0] === 70)?.[1] || 0) & 1) === 1 || (pts.length > 3 && Math.hypot(pts[0][0] - pts.at(-1)[0], pts[0][1] - pts.at(-1)[1]) < 0.01);
+      if (pts.length >= 3 && dicht) L.vormen.push({ punten: pts, bron: 'lijn' }); else L.overig++;
+    } else if (e.type === 'HATCH') { // grenzen van een arcering: polylijn of losse lijnstukken
+      let k = c.findIndex(x => x[0] === 91), n = k >= 0 ? +c[k][1] : 0;
+      for (let b = 0; b < n; b++) {
+        k = c.findIndex((x, j) => j > k && x[0] === 92); if (k < 0) break;
+        const poly = (+c[k][1] & 2) === 2, k93 = c.findIndex((x, j) => j > k && x[0] === 93), aantal = +c[k93][1], pts = [];
+        let j = k93 + 1, gedaan = 0;
+        while (j < c.length - 1 && (poly ? pts.length < aantal : gedaan < aantal)) {
+          if (!poly && c[j][0] === 72) gedaan++;
+          if (c[j][0] === 10 && c[j + 1][0] === 20) { pts.push([m(c[j][1]), m(c[j + 1][1])]); j += 2; continue; }
+          if (c[j][0] === 92) break;
+          j++;
+        }
+        k = j;
+        if (pts.length >= 3) L.vormen.push({ punten: pts, bron: 'arcering' });
+      }
+    } else if (e.type === 'CIRCLE') {
+      const g = n => +c.find(x => x[0] === n)?.[1];
+      L.cirkels.push({ x: m(g(10)), y: m(g(20)), r: m(g(40)) });
+    } else L.overig++;
+  }
+  for (const L of Object.values(lagen)) { // arcering met dezelfde vorm als een lijn niet dubbel tellen
+    const lijnen = L.vormen.filter(v => v.bron === 'lijn');
+    L.vormen = L.vormen.filter((v, i) => v.bron === 'lijn' ? true : !lijnen.some(w => zelfdeVorm(v.punten, w.punten)) && !L.vormen.slice(0, i).some(w => w.bron === 'arcering' && zelfdeVorm(v.punten, w.punten)));
+  }
+  return lagen;
+}
+// type raden aan de laagnaam
+function raadDxfType(naam) {
+  const n = naam.toUpperCase();
+  const regels = [[/TEKST|TEXT|MAAT|DIM|KADER|RASTER|HULP/, ''], [/BOOM|TREE/, 'boom'], [/PLANTENBAK|\bBAK\b/, 'plantenbak'], [/FORMEEL|HAAG/, 'haag'], [/HEESTER|STRUIK/, 'sierbeplanting'],
+    [/BEPLANT|VASTE|BORDER/, 'border'], [/GRAS|GAZON/, 'gras'], [/SCHELP|GRIND/, 'siergrind'], [/HOUT|VLONDER/, 'vlonder'], [/BANK|ZIT/, 'zitelement'],
+    [/WATER|VIJVER/, 'water'], [/ZWEMBAD/, 'zwembad'], [/DAK/, 'dakvlak'], [/KLINKER/, 'klinkers'], [/TRAP|PAD|TERRAS|TEGEL|VERHARD|BESTRAT/, project.soort === 'tuin' ? 'terras' : 'tegels'], [/SCHUTTING|WAND|MUUR/, 'schutting'], [/ZAND/, 'zand']];
+  for (const [re, type] of regels) if (re.test(n)) return type;
+  return 'onbekend';
+}
+function startDxfImport(naam, tekst) {
+  const lagen = leesDxf(tekst);
+  const keuze = Object.fromEntries(Object.values(lagen).map(L => [L.naam, L.vormen.length || L.cirkels.length ? raadDxfType(L.naam) : '']));
+  for (const L of Object.values(lagen)) if (keuze[L.naam] === 'boom' && !L.cirkels.length) keuze[L.naam] = '';
+  dxfImport = { naam, lagen, keuze, vervangen: !project.vlakken.length || confirm('Het huidige ontwerp vervangen door deze tekening?\nOK = vervangen, Annuleren = toevoegen') };
+  selectie = null; legendaKeuze = null; zetModus('selecteer'); zetTab('eigenschappen'); tekenPanel();
+}
+function dxfHtml() {
+  const { naam, lagen, keuze } = dxfImport;
+  const opties = sel => `<option value="">— negeren —</option><option value="boom" ${sel === 'boom' ? 'selected' : ''}>Bomen (uit cirkels)</option>` + Object.keys(VLAKTYPEN).map(k => `<option value="${k}" ${k === sel ? 'selected' : ''}>${esc(vt(k).naam)}</option>`).join('');
+  const rijen = Object.values(lagen).map(L => `<tr><td><b>${esc(L.naam)}</b><br><span class="hint">${L.vormen.length} vlak${L.vormen.length === 1 ? '' : 'ken'}${L.cirkels.length ? ` · ${L.cirkels.length} cirkels` : ''}${L.overig ? ` · ${L.overig} overig` : ''}</span></td>
+    <td><select data-dxflaag="${esc(L.naam)}" style="max-width:150px">${opties(keuze[L.naam])}</select></td></tr>`).join('');
+  return `<div class="kaart"><h3>Tekening inlezen</h3><p class="hint">${esc(naam)}. Per laag staat een voorstel; pas aan waar nodig. Vlakken binnen een verhoogde plantenbak komen in 3D op de hoogte van de bak.</p>
+    <table><tr><th>Laag</th><th>Wordt</th></tr>${rijen}</table>
+    <p class="hint">${dxfImport.vervangen ? 'Het huidige ontwerp wordt vervangen.' : 'De tekening wordt aan het huidige ontwerp toegevoegd.'}</p>
+    <div class="groep"><button class="knop hoofd" data-actie="dxfImporteren">Importeren</button><button class="knop" data-actie="dxfAnnuleren">Annuleren</button></div></div>`;
+}
+function dxfImporteren() {
+  const { naam, lagen, keuze, vervangen } = dxfImport;
+  bewaarStap();
+  if (vervangen) { project.vlakken = []; project.objecten = []; }
+  let nV = 0, nB = 0;
+  for (const L of Object.values(lagen)) {
+    const type = keuze[L.naam]; if (!type) continue;
+    if (type === 'boom') {
+      const kronen = L.cirkels.filter(c => c.r > 0.3); if (!kronen.length) continue;
+      const d = kronen.reduce((s, c) => s + c.r * 2, 0) / kronen.length;
+      project.soorten.boom_uit_tekening ??= { naam: 'Boom uit tekening (soort invullen)', categorie: 'boom', hoogte: [+(d * 1.3).toFixed(1), +(d * 2.4).toFixed(1)], breedte: [+(d * 0.7).toFixed(1), +(d * 1.2).toFixed(1)], stam: 1.2, jaren: 15,
+        blad: '#5b8f3a', bloei: null, herfst: [10, 11], herfstkleur: '#c99a2e', kaal: [12, 3], ez: { preset: 'Ash Medium', blad: 'aspen' }, aanname: `Kroonmaat uit de tekening (gemiddeld Ø ${fmt(d, 1)} m); soort en hoogte zijn aannames. Kies de soort via het zoekveld.` };
+      for (const c of kronen) { project.objecten.push({ id: uid('o'), type: 'boom', x: r2(c.x), y: r2(c.y), rotatie: 0, soort: 'boom_uit_tekening' }); nB++; }
+      continue;
+    }
+    let vormen = L.vormen;
+    if (type === 'plantenbak') vormen = vormen.filter(v => !vormen.some(w => w !== v && oppervlak(w.punten) > oppervlak(v.punten) && v.punten.every(p => binnen(p, w.punten)))); // binnenrand van de bak overslaan
+    for (const v of vormen) {
+      const nieuw = { id: uid('v'), type, punten: v.punten.map(([x, y]) => [r2(x), r2(y)]), bronLaag: L.naam };
+      if (type === 'haag' && /FORMEEL/i.test(L.naam)) nieuw.hoogte = 0.8; // formele struiken: laag gesnoeid
+      project.vlakken.push(nieuw); nV++;
+    }
+  }
+  project.bron = { bestand: naam, schaal: 'DXF (in meters)', uitgelezen: new Date().toISOString().slice(0, 10) };
+  if (vervangen && project.naam === 'Nieuw ontwerp') project.naam = naam.replace(/\.dxf$/i, '');
+  dxfImport = null; alles(); setTimeout(() => { passend(); drie.camera(new URLSearchParams(location.search).get('camera') || 'vogel'); }, 300);
+  melding(`Tekening ingelezen: ${nV} vlakken en ${nB} bomen`);
+}
+// hoogte van een verhoogde plantenbak op een punt (0 als er geen bak is)
+function niveauOp(x, y) {
+  let h = 0;
+  for (const w of project.vlakken) if (w.type === 'plantenbak' && binnen([x, y], vorm(w))) h = Math.max(h, w.hoogte ?? vt('plantenbak').L.hoogte ?? VLAKTYPEN.plantenbak.hoogte);
+  return h;
+}
+
+// =====================================================================
 // Bestanden
 // =====================================================================
 function download(blob, naam) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = naam.replace(/[\\/:*?"<>|]/g, '-'); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
@@ -2100,6 +2454,8 @@ async function klantversie() {
     const p = structuredClone(project); delete p.ondergrond; // de ondergrond (schets/tekening) gaat niet mee
     const in3D = new Set(p.objecten.filter(o => o.type === 'model' || o.type === 'productfoto').map(o => o.bijlage));
     p.bijlagen = (p.bijlagen || []).filter(b => in3D.has(b.id)); // productbladen e.d. blijven bij jou
+    const gebruikt = new Set([...p.objecten.map(o => o.soort), ...project.vlakken.flatMap(v => beplantingVan(v)?.ids || []), 'bestaande_heesters', 'groenten', 'bloemenmengsel'].filter(Boolean));
+    p.soorten = { ...Object.fromEntries([...gebruikt].map(id => [id, soort(id)])), ...p.soorten };
     const data = JSON.stringify({ project: p, texturen, logo, gemaakt: new Date().toISOString().slice(0, 10) }).replace(/</g, '\\u003c');
     const html = bron.replace('<script type="importmap">', `<script>window.__KLANT = ${data};<\/script>\n<script type="importmap">`) // <\/ : anders sluit de browser hier het script af
                      .replace('<title>Tuinontwerp</title>', `<title>${esc(project.naam)} – 3D-ontwerp</title>`);
@@ -2120,6 +2476,7 @@ new ResizeObserver(() => teken2D()).observe(svg);
 // =====================================================================
 // Start
 // =====================================================================
+if (!KLANT) PLANTENLIJST = await fetch('plantenlijst.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
 let start = null;
 try { start = JSON.parse(localStorage.getItem('tuinontwerp-laatste')); } catch { /* geen opslag beschikbaar */ }
 const projectUrl = new URLSearchParams(location.search).get('project');
@@ -2131,17 +2488,25 @@ if (KLANT) {
 } else if (projectUrl) {
   alles();
   fetch(projectUrl).then(r => { if (!r.ok) throw new Error(r.status + ' ' + projectUrl); return r.json(); })
-    .then(p => {
+    .then(async p => {
       const q = new URLSearchParams(location.search);
       p.instellingen = { ...p.instellingen };
       for (const k of ['maand', 'jaren', 'uur']) if (q.get(k)) p.instellingen[k] = +q.get(k);
       if (q.get('kwaliteit')) p.instellingen.kwaliteit = q.get('kwaliteit');
       laadProject(p);
       if (q.get('tab')) zetTab(q.get('tab'));
+      if (q.get('lopen')) setTimeout(() => drie.startLopen(), 2500);
+      if (q.get('testloop')) setTimeout(() => drie.testLopen(+q.get('testloop')), 4000); // test: n stappen van 50 ms vooruit
+      if (q.get('dxf')) { const tekst = await (await fetch(q.get('dxf'))).text(); startDxfImport(q.get('dxf').split('/').pop(), tekst); if (q.get('dxfauto')) dxfImporteren(); }
+      if (q.get('kies')) { const id = q.get('kies'); selectie = { soort: project.objecten.some(o => o.id === id) ? 'object' : 'vlak', id }; teken2D(); tekenPanel(); } // test: element selecteren
+      if (q.get('zoek')) { soortZoek = q.get('zoek'); tekenPanel(); }
       if (q.get('legenda')) document.querySelector(`[data-vlak="${q.get('legenda')}"]`)?.click();
       if (q.get('toonpng')) setTimeout(() => { const i = new Image(); i.src = drie.pngVoorbeeld(); i.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:99'; document.body.appendChild(i); }, 12000); // test: toon de opgeslagen afbeelding
       if (q.get('weergave')) document.querySelector(`[data-weergave="${q.get('weergave')}"]`)?.click();
     }).catch(e => toonFout('Project kon niet worden geladen: ' + e.message));
+} else if (new URLSearchParams(location.search).get('dxf')) {
+  const q = new URLSearchParams(location.search); project = leegProject(q.get('soort') || 'tuin'); alles();
+  fetch(q.get('dxf')).then(r => r.text()).then(tekst => { startDxfImport(q.get('dxf').split('/').pop(), tekst); if (q.get('dxfauto')) dxfImporteren(); if (q.get('lopen')) setTimeout(() => drie.startLopen(), 3000); if (q.get('testloop')) setTimeout(() => drie.testLopen(+q.get('testloop')), 4500); if (q.get('weergave')) document.querySelector(`[data-weergave="${q.get('weergave')}"]`)?.click(); });
 } else if (start?.vlakken) { try { laadProject(start); } catch { alles(); } }
 else { alles(); setTimeout(() => { passend(); drie.camera('vogel'); }, 100); status('Begin met "Ondergrond laden" (rechts) of open een bestaand project.'); }
 window.__tuin = { get project() { return project; }, laadProject, drie }; // voor testen
